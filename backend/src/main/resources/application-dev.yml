@@ -1,0 +1,36 @@
+spring:
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: test-hub-quartz
+            instanceId: AUTO #默认主机名和时间戳生成实例ID,可以是任何字符串，但对于所有调度程序来说，必须是唯一的 对应qrtz_scheduler_state INSTANCE_NAME字段
+          jobStore:
+            #            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore #持久化配置
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+          threadPool:
+            threadCount: 10
+            threadsInheritContextClassLoaderOfInitializingThread: true
+jwt:
+  secret: K4lgrcqOP576NhrtYJhuQD8DdMYfZtb58hWdJaTjPbk=
+  access-token-validity-in-seconds: 300000 #5m
+  refresh-token-validity-in-seconds: 604800000 # 7d
+mybatis-flex:
+  datasource:
+    ds1:
+      url: jdbc:mysql://localhost:3306/test-hub?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+      hikari:
+        connection-test-query: SELECT 1
+
+logging:
+  level:
+    web: debug # Web 模块日志级别
+    org.springframework.web: DEBUG  # Spring Web 框架日志
+    org.springframework.boot.web.servlet: DEBUG  # Servlet 容器日志
+    org.springframework.security: DEBUG
