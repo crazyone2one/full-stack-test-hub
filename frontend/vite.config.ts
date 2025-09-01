@@ -1,12 +1,13 @@
-import { defineConfig } from 'vite'
+import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import UnoCSS from 'unocss/vite'
 
 // https://vite.dev/config/
 export default defineConfig(({mode}) => {
     const isProduction = mode === 'production'
     return {
-        plugins: [vue()],
+        plugins: [vue(), UnoCSS()],
         server: !isProduction ? {
             proxy: {
                 '/front': {
@@ -24,5 +25,15 @@ export default defineConfig(({mode}) => {
                 },
             ]
         },
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks: {
+                        'vue-libs': ['vue', 'vue-router', 'pinia'],
+                        'naive-ui': ['naive-ui']
+                    }
+                }
+            }
+        }
     }
 });

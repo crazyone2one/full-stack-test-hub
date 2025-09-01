@@ -10,13 +10,20 @@
   },
   "dependencies": {
     "alova": "^3.3.4",
-    "vue": "^3.5.18"
+    "pinia": "^3.0.3",
+    "pinia-plugin-persistedstate": "^4.5.0",
+    "vue": "^3.5.18",
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@iconify/utils": "^3.0.1",
     "@types/node": "^24.3.0",
+    "@vicons/tabler": "^0.13.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.7.0",
+    "naive-ui": "^2.42.0",
     "typescript": "~5.8.3",
+    "unocss": "^66.5.0",
     "vite": "^7.1.2",
     "vue-tsc": "^3.0.5"
   }

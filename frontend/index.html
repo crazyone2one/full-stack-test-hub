@@ -9,5 +9,12 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
+    <script>
+        //解决 firefox 拖拽会自动打开新标签
+        document.body.ondrop = function (event) {
+            event.preventDefault()
+            event.stopPropagation()
+        }
+    </script>
   </body>
 </html>
