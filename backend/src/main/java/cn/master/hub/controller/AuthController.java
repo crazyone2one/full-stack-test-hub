@@ -1,7 +1,7 @@
 package cn.master.hub.controller;
 
 import cn.master.hub.dto.request.AuthenticationRequest;
-import cn.master.hub.entity.AuthenticationResponse;
+import cn.master.hub.dto.response.AuthenticationResponse;
 import cn.master.hub.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
