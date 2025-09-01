@@ -17,8 +17,6 @@ export const alovaInstance = createAlova({
             // 检查 HTTP 状态码
             if (response.status >= 200 && response.status < 300) {
                 const data = await response.json();
-
-                // 根据后端 ResultHolder 结构处理响应
                 if (data.code === 100200) {
                     // 成功响应，返回数据部分
                     return data.data !== undefined ? data.data : data;
