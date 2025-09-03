@@ -10,11 +10,21 @@ import {
   useOsTheme,
   zhCN
 } from "naive-ui";
-import {computed} from "vue";
+import {computed, onBeforeMount} from "vue";
+import {useEventListener, useWindowSize} from '@vueuse/core';
+import useAppStore from "/@/store/modules/app";
 
 const osTheme = useOsTheme()
-
+const appStore = useAppStore()
 const theme = computed(() => (osTheme.value === 'dark' ? darkTheme : null))
+onBeforeMount(() => {
+  const {height} = useWindowSize();
+  appStore.appState.innerHeight = height.value
+})
+useEventListener(window, 'resize', () => {
+  const {height} = useWindowSize();
+  appStore.appState.innerHeight = height.value
+})
 </script>
 
 <template>
