@@ -1,5 +1,7 @@
 package cn.master.hub.service;
 
+import cn.master.hub.dto.request.BasePageRequest;
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
 import cn.master.hub.entity.SystemUser;
 
@@ -11,4 +13,5 @@ import cn.master.hub.entity.SystemUser;
  */
 public interface SystemUserService extends IService<SystemUser> {
 
+    Page<SystemUser> getUserPage(BasePageRequest request);
 }
