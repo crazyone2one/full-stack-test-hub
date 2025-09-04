@@ -4,10 +4,13 @@ import {type FormInst, NButton, NCard, NCheckbox, NForm, NFormItem, NInput, NTex
 import {authApi} from "/@/api/modules/auth.ts";
 import {useForm} from "alova/client";
 import {setToken} from "/@/utils/auth.ts";
+import {useAppStore, useUserStore} from "/@/store";
+import {useRouter} from "vue-router";
 
 // 消息提示
 const message = useMessage();
-
+const userStore = useUserStore()
+const appStore = useAppStore()
 // 表单引用
 const loginFormRef = ref<FormInst | null>(null);
 
@@ -23,47 +26,32 @@ const formData = reactive({
 
 // 表单验证规则
 const formRules = {
-  username: [
-    {
-      required: true,
-      message: '请输入用户名',
-      trigger: ['blur', 'input']
-    }
-  ],
+  username: [{required: true, message: '请输入用户名', trigger: ['blur', 'input']}],
   password: [
-    {
-      required: true,
-      message: '请输入密码',
-      trigger: ['blur', 'input']
-    },
-    {
-      min: 6,
-      message: '密码长度不能少于6位',
-      trigger: 'blur'
-    }
+    {required: true, message: '请输入密码', trigger: ['blur', 'input']},
+    {min: 6, message: '密码长度不能少于6位', trigger: 'blur'}
   ]
 };
-
+const router = useRouter()
 const {send} = useForm(() => authApi.login(formData), {immediate: false})
 // 登录处理
 const handleLogin = async () => {
   // 表单验证
   const valid = await loginFormRef.value?.validate();
   if (!valid) return;
-
-  // 模拟登录加载
   isLoading.value = true;
-
   try {
-    // 实际项目中替换为真实登录API
-    console.log('登录参数:', formData);
     send().then(res => {
-      const {accessToken, refreshToken} = res
+      const {accessToken, refreshToken, user} = res
       setToken(accessToken, refreshToken)
+      userStore.setInfo(user)
+      appStore.setCurrentOrgId(user.lastOrganizationId);
+      appStore.setCurrentProjectId(user.lastProjectId);
       // 登录成功处理
       message.success('登录成功');
-      // 这里可以添加路由跳转逻辑
-      // router.push('/dashboard');
+      const route = router.currentRoute.value
+      const redirect = route.query.redirect?.toString()
+      router.replace(redirect ?? route.redirectedFrom?.fullPath ?? '/')
     })
   } catch (error) {
     message.error('登录失败: 用户名或密码错误');

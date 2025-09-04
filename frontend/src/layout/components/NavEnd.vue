@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import {NAvatar, NBadge, NButton, NDropdown, NIcon, NSwitch, NTooltip} from "naive-ui";
-import {CalendarTime, BellRinging} from "@vicons/tabler";
-
+import {NAvatar, NBadge, NButton, NDropdown, NIcon, NTooltip} from "naive-ui";
+import {BellRinging, CalendarTime} from "@vicons/tabler";
+import useUser from "/@/hooks/use-user.ts";
 import {computed, ref} from "vue";
 
 const unReadCount = ref(1)
-const handleSelect = () => {
-
+const handleSelect = (key: string) => {
+  switch (key) {
+    case 'profile':
+      break;
+    case 'logout':
+      useUser().logout(undefined, true)
+      break;
+  }
 }
 const options = computed(() => {
   return [
