@@ -45,8 +45,8 @@ const handleLogin = async () => {
       const {accessToken, refreshToken, user} = res
       setToken(accessToken, refreshToken)
       userStore.setInfo(user)
-      appStore.setCurrentOrgId(user.lastOrganizationId);
-      appStore.setCurrentProjectId(user.lastProjectId);
+      appStore.setCurrentOrgId(user.lastOrganizationId || '');
+      appStore.setCurrentProjectId(user.lastProjectId || '');
       // 登录成功处理
       message.success('登录成功');
       const route = router.currentRoute.value
