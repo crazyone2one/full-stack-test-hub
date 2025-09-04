@@ -27,12 +27,18 @@ const {onAuthRequired, onResponseRefreshToken} = createServerTokenAuthentication
                 // 并抛出错误
                 throw error;
             }
-        }
+        },
     },
     logout: () => {
         // 登出处理
         clearToken()
     },
+    assignToken: method => {
+        const token = getToken();
+        if (token && (!method.meta?.authRole || true)) {
+            method.config.headers.Authorization = `Bearer ${token.accessToken}`;
+        }
+    }
 });
 export const alovaInstance = createAlova({
     baseURL: `${window.location.origin}/${import.meta.env.VITE_API_BASE_URL}`,
@@ -40,16 +46,12 @@ export const alovaInstance = createAlova({
     requestAdapter: adapterFetch(),
     timeout: 300 * 1000,
     beforeRequest: onAuthRequired((method) => {
-        const token = getToken();
         const appStore = useAppStore();
-        if (token && method.meta?.authRole != null) {
-            method.config.headers = {
-                ...method.config.headers,
-                'ORGANIZATION': appStore.currentOrgId,
-                'PROJECT': appStore.currentProjectId,
-                'Authorization': `Bearer ${token.accessToken}`,
-            };
-        }
+        method.config.headers = {
+            ...method.config.headers,
+            'ORGANIZATION': appStore.currentOrgId,
+            'PROJECT': appStore.currentProjectId,
+        };
     }),
     responded: onResponseRefreshToken({
         // 成功响应处理
