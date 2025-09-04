@@ -7,12 +7,14 @@ import {
   NGlobalStyle,
   NLoadingBarProvider,
   NMessageProvider,
+  NNotificationProvider,
   useOsTheme,
   zhCN
 } from "naive-ui";
 import {computed, onBeforeMount} from "vue";
 import {useEventListener, useWindowSize} from '@vueuse/core';
 import useAppStore from "/@/store/modules/app";
+import ViewComp from "/@/components/ViewComp.vue";
 
 const osTheme = useOsTheme()
 const appStore = useAppStore()
@@ -25,6 +27,7 @@ useEventListener(window, 'resize', () => {
   const {height} = useWindowSize();
   appStore.appState.innerHeight = height.value
 })
+
 </script>
 
 <template>
@@ -33,8 +36,10 @@ useEventListener(window, 'resize', () => {
     <n-loading-bar-provider>
       <n-message-provider>
         <n-dialog-provider>
-          <router-view/>
-          <slot/>
+          <n-notification-provider>
+            <view-comp/>
+            <slot/>
+          </n-notification-provider>
         </n-dialog-provider>
       </n-message-provider>
     </n-loading-bar-provider>

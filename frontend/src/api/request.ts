@@ -6,6 +6,18 @@ import useAppStore from "/@/store/modules/app";
 import {createServerTokenAuthentication} from "alova/client";
 import {authApi} from "/@/api/modules/auth.ts";
 
+const RESULT_CODE_MAP: Record<number, { type: 'success' | 'error' | 'warning' | 'info', message: string }> = {
+    100200: {type: 'success', message: '操作成功'},
+    100500: {type: 'error', message: '操作失败'},
+    100400: {type: 'warning', message: '参数校验失败'},
+    100401: {type: 'error', message: '用户认证失败'},
+    100403: {type: 'error', message: '权限认证失败'},
+    100404: {type: 'warning', message: '资源不存在'},
+    100405: {type: 'warning', message: '请求方法不允许'},
+    100408: {type: 'warning', message: '请求超时'},
+    100409: {type: 'warning', message: '资源冲突'},
+    100415: {type: 'warning', message: '不支持的媒体类型'},
+};
 const {onAuthRequired, onResponseRefreshToken} = createServerTokenAuthentication({
     refreshTokenOnSuccess: {
         isExpired: (response, method) => {
@@ -52,16 +64,29 @@ export const alovaInstance = createAlova({
             'ORGANIZATION': appStore.currentOrgId,
             'PROJECT': appStore.currentProjectId,
         };
+        appStore.showLoading()
     }),
     responded: onResponseRefreshToken({
         // 成功响应处理
         onSuccess: async (response, method) => {
+            const appStore = useAppStore();
+            appStore.hideLoading()
             if (method.meta?.isBlob) {
                 return response.blob();
             }
             // 检查 HTTP 状态码
             if (response.status >= 200 && response.status < 300) {
                 const data = await response.json();
+                // 根据后端返回的状态码显示对应提示
+                if (data.code !== 100200 && data.message && !method.meta?.ignoreMessage) {
+                    const codeInfo = RESULT_CODE_MAP[data.code];
+                    if (codeInfo && window.$message) {
+                        window.$message[codeInfo.type](data.message || codeInfo.message);
+                    } else if (window.$message) {
+                        // 默认使用 error 类型提示
+                        window.$message.error(data.message);
+                    }
+                }
                 if (data.code === 100200) {
                     // 成功响应，返回数据部分
                     return data.data !== undefined ? data.data : data;
@@ -75,7 +100,13 @@ export const alovaInstance = createAlova({
             }
         },
         // 错误响应处理
-        onError: (error, _method) => {
+        onError: (error, method) => {
+            const appStore = useAppStore();
+            appStore.hideLoading()
+            // 显示错误提示
+            if (!method.meta?.ignoreMessage && window.$message) {
+                window.$message.error(error.message || '网络请求失败');
+            }
             console.error('API Error:', error);
             throw new Error(error.message || '网络请求失败');
         }

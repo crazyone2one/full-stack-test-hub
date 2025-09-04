@@ -11,12 +11,21 @@ interface ImportMetaEnv {
     readonly VITE_APP_TITLE: string
     readonly VITE_APP_TOKEN_STORAGE: 'sessionStorage' | 'localStorage'
 }
+
 interface ImportMeta {
     readonly env: ImportMetaEnv;
 }
 
 declare module '*.vue' {
-    import { DefineComponent } from 'vue'
+    import type {DialogProviderInst, MessageProviderInst, NotificationProviderInst,} from 'naive-ui';
+    import {DefineComponent} from 'vue';
+    global {
+        interface Window {
+            $message: MessageProviderInst;
+            $dialog: DialogProviderInst;
+            $notification: NotificationProviderInst;
+        }
+    }
     const component: DefineComponent<{}, {}, any>
     export default component
 }
