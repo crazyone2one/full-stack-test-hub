@@ -1,6 +1,7 @@
 package cn.master.hub.handler.security;
 
 import cn.master.hub.handler.JwtTokenProvider;
+import cn.master.hub.service.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -27,11 +31,18 @@ public class RestAuthenticationFilter extends OncePerRequestFilter {
     private final RestUserDetailsService restUserDetailsService;
     private final JwtTokenProvider jwtTokenProvider;
     private final HandlerExceptionResolver handlerExceptionResolver;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getServletPath().equals("/auth/refreshToken");
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) {
+                                    @NonNull FilterChain filterChain) throws IOException {
         try {
             final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -42,7 +53,7 @@ public class RestAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtTokenProvider.extractUsername(jwt);
             if (StringUtils.isNoneBlank(username) && Objects.isNull(SecurityContextHolder.getContext().getAuthentication())) {
                 UserDetails userDetails = restUserDetailsService.loadUserByUsername(username);
-                if (jwtTokenProvider.validateToken(jwt, userDetails)) {
+                if (jwtTokenProvider.validateToken(jwt, userDetails) && !tokenBlacklistService.isBlacklisted(jwt)) {
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -53,6 +64,11 @@ public class RestAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
             filterChain.doFilter(request, response);
+        } catch (io.jsonwebtoken.JwtException exception) {
+            // JWT 相关异常应该导致认证失败，而不是服务器错误
+            AuthenticationException authException = new BadCredentialsException("Token is invalid", exception);
+            SecurityContextHolder.clearContext();
+            restAuthenticationEntryPoint.commence(request, response, authException);
         } catch (Exception exception) {
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }

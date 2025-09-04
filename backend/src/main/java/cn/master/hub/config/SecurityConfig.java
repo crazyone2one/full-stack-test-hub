@@ -14,7 +14,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -39,7 +38,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests(auth ->
                 auth
-                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/login", "/auth/refreshToken").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/index.html", "/", "/assets/**", "/vite.svg").permitAll()
                         .anyRequest().authenticated());
@@ -47,9 +46,6 @@ public class SecurityConfig {
         http.exceptionHandling(exception ->
                 exception.authenticationEntryPoint(restAuthenticationEntryPoint));
         http.authenticationManager(authenticationManager());
-        http.logout(logout -> logout
-                .logoutUrl("/auth/logout")
-                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext()));
         return http.build();
     }
 

@@ -1,4 +1,10 @@
 spring:
+  data:
+    redis:
+      host: 172.16.2.15
+      port: 6379
+      password: 3eCrAw8Ba6Tg
+      database: 3
   quartz:
     job-store-type: jdbc
     jdbc:

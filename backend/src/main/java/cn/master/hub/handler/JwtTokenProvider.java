@@ -8,7 +8,6 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +27,7 @@ public class JwtTokenProvider {
     private long ACCESS_TOKEN_EXPIRATION;
     @Value("${jwt.refresh-token-validity-in-seconds}")
     private long REFRESH_TOKEN_EXPIRATION;
+
     /**
      * 生成用于JWT签名的密钥
      * 确保密钥符合JWT JWA规范要求（至少256位）
@@ -52,7 +52,7 @@ public class JwtTokenProvider {
         }
     }
 
-    public String generateToken(Authentication authentication, String tokenType) {
+    public String generateToken(String username, String tokenType) {
         // 验证令牌类型是否有效
         if (!"access_token".equals(tokenType) && !"refresh_token".equals(tokenType)) {
             throw new IllegalArgumentException("Invalid token type");
@@ -64,7 +64,7 @@ public class JwtTokenProvider {
         // 构建并返回JWT令牌
         return Jwts.builder()
                 .header().type("JWT").and()
-                .subject(authentication.getName())
+                .subject(username)
                 .issuedAt(new Date()).expiration(new Date(expirationTime))
                 .claim("token_type", tokenType)
                 .signWith(key())
@@ -96,12 +96,17 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
+    public Date extractExpiration(String token) {
+        Claims claims = extractClaims(token);
+        return claims.getExpiration();
+    }
+
     public boolean validateToken(String token, UserDetails userDetails) {
         String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
     public boolean isTokenExpired(String token) {
-        return extractClaims(token).getExpiration().before(new Date());
+        return extractExpiration(token).before(new Date());
     }
 }
