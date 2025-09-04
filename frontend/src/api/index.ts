@@ -1,15 +1,15 @@
 import {alovaInstance} from "./request";
 
 
-export const get = (url: string, params = {}, options = {}) => {
-    return alovaInstance.Get(url, {
+export const get =<T> (url: string, params = {}, options = {}) => {
+    return alovaInstance.Get<T>(url, {
         params,
         ...options
     });
 }
 // 通用 POST 请求
-export const post = (url: string, data = {}, options = {}) => {
-    return alovaInstance.Post(url, data, {
+export const post = <T>(url: string, data = {}, options = {}) => {
+    return alovaInstance.Post<T>(url, data, {
         ...options
     });
 };
