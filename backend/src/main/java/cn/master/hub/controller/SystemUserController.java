@@ -1,8 +1,12 @@
 package cn.master.hub.controller;
 
+import cn.master.hub.constants.UserSource;
+import cn.master.hub.dto.UserCreateInfo;
 import cn.master.hub.dto.request.BasePageRequest;
 import cn.master.hub.entity.SystemUser;
+import cn.master.hub.handler.validation.Created;
 import cn.master.hub.service.SystemUserService;
+import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,13 +34,13 @@ public class SystemUserController {
     /**
      * 保存用户。
      *
-     * @param systemUser 用户
+     * @param userCreateDTO 用户
      * @return {@code true} 保存成功，{@code false} 保存失败
      */
     @PostMapping("save")
     @Operation(description = "保存用户")
-    public boolean save(@RequestBody @Parameter(description = "用户") SystemUser systemUser) {
-        return systemUserService.save(systemUser);
+    public String save(@Validated({Created.class}) @RequestBody UserCreateInfo userCreateDTO) {
+        return systemUserService.addUser(userCreateDTO, UserSource.LOCAL.name(), SessionUtils.getCurrentUserName());
     }
 
     /**

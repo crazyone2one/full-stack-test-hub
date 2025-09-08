@@ -11,7 +11,12 @@ import java.util.List;
  * @author Created by 11's papa on 2025/8/29
  */
 public record UserPrincipal(SystemUser user) implements UserDetails {
-
+    public String getUserProjectId(){
+        return this.user.getLastProjectId();
+    }
+    public String getUserOrganizationId(){
+        return this.user.getLastOrganizationId();
+    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();

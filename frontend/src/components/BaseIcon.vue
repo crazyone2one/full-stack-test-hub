@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import {Users, AlertCircle as fallback, Dashboard,Api} from "@vicons/tabler";
+import {Users, AlertCircle as fallback, Dashboard, Api, DragDrop as drag} from "@vicons/tabler";
 import {NIcon} from 'naive-ui'
 
-const icons = {Users, fallback, Dashboard,Api}
+const icons = {Users, fallback, Dashboard, Api, drag}
 type IconTypes = keyof typeof icons
 
 const props = defineProps({
