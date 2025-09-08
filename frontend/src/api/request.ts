@@ -52,6 +52,23 @@ const {onAuthRequired, onResponseRefreshToken} = createServerTokenAuthentication
         }
     }
 });
+
+const handleError = (method: any, data: any) => {
+    if (data.code !== 100200 && data.message && !method.meta?.ignoreMessage) {
+        showResultMessage(data.code, data.message);
+    }
+};
+// 提取消息显示逻辑到独立函数
+const showResultMessage = (code: number, message: string) => {
+    if (!window.$message) return;
+    const codeInfo = RESULT_CODE_MAP[code];
+    if (codeInfo) {
+        window.$message[codeInfo.type](message || codeInfo.message);
+    } else {
+        // 默认使用 error 类型提示
+        window.$message.error(message);
+    }
+};
 export const alovaInstance = createAlova({
     baseURL: `${window.location.origin}/${import.meta.env.VITE_API_BASE_URL}`,
     statesHook: VueHook,
@@ -74,29 +91,33 @@ export const alovaInstance = createAlova({
             if (method.meta?.isBlob) {
                 return response.blob();
             }
+            // 解析 JSON 数据
+            let data: any;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                // JSON 解析失败处理
+                throw new Error('服务器响应格式错误');
+            }
+
             // 检查 HTTP 状态码
-            if (response.status >= 200 && response.status < 300) {
-                const data = await response.json();
-                // 根据后端返回的状态码显示对应提示
-                if (data.code !== 100200 && data.message && !method.meta?.ignoreMessage) {
-                    const codeInfo = RESULT_CODE_MAP[data.code];
-                    if (codeInfo && window.$message) {
-                        window.$message[codeInfo.type](data.message || codeInfo.message);
-                    } else if (window.$message) {
-                        // 默认使用 error 类型提示
-                        window.$message.error(data.message);
-                    }
-                }
-                if (data.code === 100200) {
-                    // 成功响应，返回数据部分
-                    return data.data !== undefined ? data.data : data;
-                } else {
-                    // 业务错误处理
-                    throw new Error(data.message || '请求失败');
-                }
-            } else {
+            if (response.status < 200 || response.status >= 300) {
                 // HTTP 错误处理
+                handleError(method, data);
                 throw new Error(`HTTP Error: ${response.status}`);
+            }
+
+            // 根据后端返回的状态码显示对应提示
+            if (data.code !== 100200 && data.message && !method.meta?.ignoreMessage) {
+                showResultMessage(data.code, data.message);
+            }
+
+            if (data.code === 100200) {
+                // 成功响应，返回数据部分
+                return data.data !== undefined ? data.data : data;
+            } else {
+                // 业务错误处理
+                throw new Error(data.message || '请求失败');
             }
         },
         // 错误响应处理
@@ -111,5 +132,4 @@ export const alovaInstance = createAlova({
             throw new Error(error.message || '网络请求失败');
         }
     }),
-
 });
