@@ -1,8 +1,18 @@
 <script setup lang="ts">
-import {NLayoutHeader, NFlex} from "naive-ui";
-import BaseSelect from "/@/layout/components/BaseSelect.vue";
+import {NFlex, NLayoutHeader, NSelect,NButton} from "naive-ui";
 import TopMenu from '/@/components/top-menu/index.vue'
 import NavEnd from "/@/layout/components/NavEnd.vue";
+import {useAppStore} from "/@/store";
+import {ref, watch} from "vue";
+import {CaretDown, Search} from "@vicons/tabler";
+
+const appStore = useAppStore();
+const show = ref(false)
+watch(() => appStore.appState.currentOrgId, () => {
+  appStore.initProjectList()
+}, {
+  immediate: true,
+})
 </script>
 
 <template>
@@ -28,7 +38,21 @@ import NavEnd from "/@/layout/components/NavEnd.vue";
       <div class="flex flex-1 items-center">
         <!--        项目选择器-->
         <div class="w-[216px] mr-[12px] pl-[36px]">
-          <base-select :options="[]"/>
+          <n-select v-model:show="show"
+                    v-model:value="appStore.appState.currentProjectId"
+                    :options="appStore.appState.projectList"
+                    label-field="name" value-field="id">
+            <template #arrow>
+              <caret-down v-if="!show" class="color-purple"/>
+              <search v-else/>
+            </template>
+            <template #action>
+              <n-button text>
+                <div class="i-mdi:plus-box-outline"/>
+                新建项目
+              </n-button>
+            </template>
+          </n-select>
         </div>
         <!--        顶部菜单-->
         <div class="grow-0 shrink-1 overflow-hidden ml-[24px]">

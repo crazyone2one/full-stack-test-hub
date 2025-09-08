@@ -1,3 +1,5 @@
+import type {ProjectListItem} from "/@/api/types/project.ts";
+
 export interface AppState {
     currentOrgId: string;
     currentProjectId: string;
@@ -5,4 +7,5 @@ export interface AppState {
     menuCollapse: boolean; // 菜单是否折叠
     loading: boolean
     loadingTip: string
+    projectList: ProjectListItem[]
 }
