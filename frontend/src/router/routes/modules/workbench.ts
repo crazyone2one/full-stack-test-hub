@@ -9,7 +9,7 @@ const Dashboard: RouteRecordRaw = {
     meta: {
         locale: '工作台',
         collapsedLocale: '首页',
-        icon: 'icon-a-icon_test-tracking_filled1',
+        icon: 'i-mdi:monitor-dashboard',
         order: 0,
         hideChildrenInMenu: true,
     },

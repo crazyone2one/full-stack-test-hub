@@ -1,6 +1,7 @@
 import type {SystemScopeType, UserRole, UserRoleRelation} from "/@/store/modules/user/types.ts";
 import {useAppStore, useUserStore} from "/@/store";
 import type {RouteLocationNormalized, RouteRecordNormalized, RouteRecordRaw} from "vue-router";
+import appRoutes from "/@/router/routes";
 
 export const hasPermission = (permission: string, typeList: string[]) => {
     const userStore = useUserStore();
@@ -97,4 +98,29 @@ export const getFirstRouteNameByPermission = (routerList: RouteRecordNormalized[
             return 0;
         })[0];
     return currentRoute?.name || 'index';
+}
+export const findRouteByName = (name: string) => {
+    const queue: RouteRecordNormalized[] = [...appRoutes];
+    while (queue.length > 0) {
+        const currentRoute = queue.shift();
+
+        if (!currentRoute) {
+            return;
+        }
+        if (currentRoute.name === name) {
+            return currentRoute;
+        }
+        if (currentRoute.children) {
+            queue.push(...(currentRoute.children as RouteRecordNormalized[]));
+        }
+    }
+    return null;
+}
+export const getFirstRouterNameByCurrentRoute = (parentName: string) => {
+    const currentRoute = findRouteByName(parentName);
+    if (currentRoute) {
+        const hasAuthChildrenRouter = currentRoute.children.find((item) => hasAnyPermission(item.meta?.roles as string[] || []));
+        return hasAuthChildrenRouter ? hasAuthChildrenRouter.name : parentName;
+    }
+    return parentName;
 }

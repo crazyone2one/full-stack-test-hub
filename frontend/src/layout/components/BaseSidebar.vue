@@ -1,57 +1,85 @@
 <script setup lang="ts">
 
 import {type MenuOption, NLayoutSider, NMenu} from "naive-ui";
-import {computed, h, ref, watchEffect} from "vue";
-import BaseIcon from "/@/components/BaseIcon.vue";
-import {RouterLink, useRoute} from "vue-router";
-import {SettingRouteEnum} from "/@/enums/route-enum.ts";
+import {computed, h, ref} from "vue";
+import {type RouteRecordRaw, RouterLink} from "vue-router";
+import useMenuTree from "/@/hooks/use-menu-tree.ts";
+import {listenerRouteChange} from "/@/utils/route-listener.ts";
+import {getFirstRouterNameByCurrentRoute} from "/@/utils/permissions.ts";
 
-const route = useRoute()
-const currentKey = ref<string>('')
 const expandedKeys = ref<string[]>([])
 const collapsed = ref(false)
-
-const menuOptions = computed(() => {
-  return [
-    {
-      label: () => h(RouterLink, {to: {name: "workstation"}}, {default: () => 'Dashboard'}),
-      key: 'workstation',
-      icon: () => h(BaseIcon, {type: 'Dashboard'}, {})
-    },
-    // {
-    //   label: () => h(RouterLink, {to: {name: "cases"}}, {default: () => 'Cases'}),
-    //   key: 'cases',
-    //   icon: () => h(BaseIcon, {type: 'Api'}, {})
-    // },
-    {
-      label: () => h(RouterLink, {to: {name: SettingRouteEnum.SETTING_ORGANIZATION_PROJECT}}, {default: () => '项目'}),
-      key: SettingRouteEnum.SETTING_ORGANIZATION_PROJECT,
-      icon: () => h('div', {class: 'i-local-icon_test-tracking_filled'}, {})
-    },
-    {
-      label: () => h(RouterLink, {to: {name: SettingRouteEnum.SETTING_SYSTEM_USER_SINGLE}}, {default: () => 'Users'}),
-      key: 'users',
-      icon: () => h(BaseIcon, {type: 'Users'}, {})
-    }
-  ]
-})
-const routeMatched = (menu: MenuOption): boolean => {
-  return route.name === menu.key && (menu.params == null || JSON.stringify(route.params) === JSON.stringify(menu.params))
-}
-const matchExpanded = (items: MenuOption[]): boolean => {
-  let matched = false
-  for (const item of items) {
-    if (item.children != null) {
-      matchExpanded(item.children) && expandedKeys.value.push(item.key as string)
-    }
-    if (routeMatched(item)) {
-      currentKey.value = item.key as string
-      matched = true
-    }
+const {menuTree} = useMenuTree();
+const menuIcon = (name: string) => {
+  if ("workstation" === name) {
+    return 'i-mdi:monitor-dashboard'
   }
-  return matched
+  if ("projectManagement" === name) {
+    return 'i-mdi:application-cog'
+  }
+  return "i-mdi:tools";
 }
-watchEffect(() => matchExpanded(menuOptions.value))
+const menuOptions = computed(() => {
+  const travel = (_route: (RouteRecordRaw | null)[] | null, nodes: Array<MenuOption> = []) => {
+    if (_route) {
+      _route.forEach(route => {
+        const node: MenuOption = {
+          label: () => h(RouterLink, {
+            to: {
+              name: route?.meta?.hideChildrenInMenu ? getFirstRouterNameByCurrentRoute(route.name as string) : route?.name
+            }
+          }, {default: () => route?.meta?.locale}),
+          key: route?.name as string,
+          icon: route?.meta?.icon ? () => h('div', {class: menuIcon(route.name as string)}, {}) : undefined,
+        }
+        if (route?.children && route?.children?.length) {
+          node.children = travel(route?.children as RouteRecordRaw[])
+        }
+        nodes.push(node);
+      })
+    }
+    return nodes;
+  }
+  return travel(menuTree.value);
+})
+const findMenuOpenKeys = (target: string) => {
+  const result: string[] = [];
+  let isFind = false;
+  const backtrack = (item: RouteRecordRaw | null, keys: string[]) => {
+    if (target.includes(item?.name as string)) {
+      result.push(...keys);
+      if (result.length >= 2) {
+        // 由于目前存在三级子路由，所以至少会匹配到三层才算结束
+        isFind = true;
+        return;
+      }
+    }
+    if (item?.children?.length) {
+      item.children.forEach((el) => {
+        backtrack(el, [...keys, el.name as string]);
+      });
+    }
+  };
+
+  menuTree.value?.forEach((el: RouteRecordRaw | null) => {
+    if (isFind) return; // 节省性能
+    backtrack(el, [el?.name as string]);
+  });
+  return result;
+}
+const selectedKey = ref<string>('');
+/**
+ * 监听路由变化，存储打开及选中的菜单
+ */
+listenerRouteChange((newRoute) => {
+  const {requiresAuth, activeMenu, hideInMenu} = newRoute.meta;
+  if (requiresAuth !== false && (!hideInMenu || activeMenu)) {
+    const menuOpenKeys = findMenuOpenKeys((activeMenu || newRoute.name) as string);
+    const keySet = new Set([...menuOpenKeys, ...expandedKeys.value]);
+    expandedKeys.value = [...keySet];
+    selectedKey.value = menuOpenKeys[menuOpenKeys.length - 1];
+  }
+}, true);
 </script>
 
 <template>
@@ -67,13 +95,13 @@ watchEffect(() => matchExpanded(menuOptions.value))
   >
 
     <n-menu
-        v-model:value="currentKey"
+        v-model:value="selectedKey"
         :default-expanded-keys="expandedKeys"
         :collapsed-width="64"
         :collapsed-icon-size="22"
         :options="menuOptions"
         :root-indent="18"
-        @update:value="(k: string) => currentKey=k"
+        @update:value="(k: string) => selectedKey=k"
     />
   </n-layout-sider>
 </template>

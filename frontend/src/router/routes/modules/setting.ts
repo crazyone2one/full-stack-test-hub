@@ -10,6 +10,30 @@ const Setting: RouteRecordRaw = {
         collapsedLocale: '系统',
         icon: 'i-mdi:tools',
         order: 8,
+        roles: [
+            'SYSTEM_USER:READ',
+            'SYSTEM_USER_ROLE:READ',
+            'SYSTEM_ORGANIZATION_PROJECT:READ',
+            'SYSTEM_PARAMETER_SETTING_BASE:READ',
+            'SYSTEM_PARAMETER_SETTING_DISPLAY:READ',
+            'SYSTEM_PARAMETER_SETTING_AUTH:READ',
+            'SYSTEM_PARAMETER_SETTING_MEMORY_CLEAN:READ',
+            'SYSTEM_PARAMETER_SETTING_QRCODE:READ',
+            'SYSTEM_TEST_RESOURCE_POOL:READ',
+            'SYSTEM_AUTH:READ',
+            'SYSTEM_PLUGIN:READ',
+            'SYSTEM_LOG:READ',
+            'SYSTEM_CASE_TASK_CENTER:READ',
+            'SYSTEM_SCHEDULE_TASK_CENTER:READ',
+            'ORGANIZATION_MEMBER:READ',
+            'ORGANIZATION_USER_ROLE:READ',
+            'ORGANIZATION_PROJECT:READ',
+            'SYSTEM_SERVICE_INTEGRATION:READ',
+            'ORGANIZATION_TEMPLATE:READ',
+            'ORGANIZATION_LOG:READ',
+            'ORGANIZATION_CASE_TASK_CENTER:READ',
+            'ORGANIZATION_SCHEDULE_TASK_CENTER:READ',
+        ],
     },
     children: [
         {
@@ -19,14 +43,30 @@ const Setting: RouteRecordRaw = {
             meta: {
                 locale: '系统',
                 hideChildrenInMenu: true,
+                roles: [
+                    'SYSTEM_USER:READ',
+                    'SYSTEM_USER_ROLE:READ',
+                    'SYSTEM_ORGANIZATION_PROJECT:READ',
+                    'SYSTEM_PARAMETER_SETTING_BASE:READ',
+                    'SYSTEM_PARAMETER_SETTING_DISPLAY:READ',
+                    'SYSTEM_PARAMETER_SETTING_AUTH:READ',
+                    'SYSTEM_PARAMETER_SETTING_MEMORY_CLEAN:READ',
+                    'SYSTEM_PARAMETER_SETTING_QRCODE:READ',
+                    'SYSTEM_TEST_RESOURCE_POOL:READ',
+                    'SYSTEM_AUTH:READ',
+                    'SYSTEM_PLUGIN:READ',
+                    'SYSTEM_LOG:READ',
+                    'SYSTEM_CASE_TASK_CENTER:READ',
+                    'SYSTEM_SCHEDULE_TASK_CENTER:READ',
+                ],
             },
             children: [
                 {
-                    path: '/user',
+                    path: 'user',
                     name: SettingRouteEnum.SETTING_SYSTEM_USER_SINGLE,
                     component: () => import('/src/views/user/index.vue'),
                     meta: {
-                        title: '用户',
+                        roles: ['SYSTEM_USER:READ'],
                         locale: '用户',
                         isTopMenu: true,
                     }
@@ -40,6 +80,16 @@ const Setting: RouteRecordRaw = {
             meta: {
                 locale: '组织',
                 hideChildrenInMenu: true,
+                roles: [
+                    'ORGANIZATION_MEMBER:READ',
+                    'ORGANIZATION_USER_ROLE:READ',
+                    'ORGANIZATION_PROJECT:READ',
+                    'SYSTEM_SERVICE_INTEGRATION:READ',
+                    'ORGANIZATION_TEMPLATE:READ',
+                    'ORGANIZATION_LOG:READ',
+                    'ORGANIZATION_CASE_TASK_CENTER:READ',
+                    'ORGANIZATION_SCHEDULE_TASK_CENTER:READ',
+                ],
             },
             children: [
                 {
@@ -47,7 +97,7 @@ const Setting: RouteRecordRaw = {
                     name: SettingRouteEnum.SETTING_ORGANIZATION_MEMBER,
                     component: () => import('/src/views/setting/organization/member/index.vue'),
                     meta: {
-                        title: '成员',
+                        roles: ['ORGANIZATION_MEMBER:READ'],
                         locale: '成员',
                         isTopMenu: true,
                     }
@@ -57,7 +107,7 @@ const Setting: RouteRecordRaw = {
                     name: SettingRouteEnum.SETTING_ORGANIZATION_PROJECT,
                     component: () => import('/src/views/setting/organization/project/index.vue'),
                     meta: {
-                        title: '项目',
+                        roles: ['ORGANIZATION_PROJECT:READ'],
                         locale: '项目',
                         isTopMenu: true,
                     }

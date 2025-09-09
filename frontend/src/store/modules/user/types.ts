@@ -6,7 +6,7 @@ export interface UserState {
     lastOrganizationId?: string;
     lastProjectId?: string;
     avatar?: string;
-    userRolePermissions?: UserRolePermissions[];
+    userRolePermissions: UserRolePermissions[];
     userRoles?: UserRole[];
     userRoleRelations?: UserRoleRelation[];
 }

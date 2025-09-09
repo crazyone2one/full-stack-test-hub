@@ -15,6 +15,7 @@ const useUserStore = defineStore('user', {
         lastOrganizationId: '',
         email: '',
         phone: '',
+        userRolePermissions: []
     }),
     getters: {
         userInfo(state: UserState): UserState {

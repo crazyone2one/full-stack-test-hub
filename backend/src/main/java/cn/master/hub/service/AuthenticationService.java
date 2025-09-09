@@ -7,7 +7,6 @@ import cn.master.hub.dto.UserRoleResourceDTO;
 import cn.master.hub.dto.request.AuthenticationRequest;
 import cn.master.hub.dto.request.RefreshTokenRequest;
 import cn.master.hub.dto.response.AuthenticationResponse;
-import cn.master.hub.dto.response.UserResponse;
 import cn.master.hub.entity.*;
 import cn.master.hub.handler.JwtTokenProvider;
 import cn.master.hub.handler.result.ResultHolder;
@@ -36,7 +35,6 @@ import java.util.stream.Collectors;
 
 import static cn.master.hub.entity.table.SystemOrganizationTableDef.SYSTEM_ORGANIZATION;
 import static cn.master.hub.entity.table.SystemProjectTableDef.SYSTEM_PROJECT;
-import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
 
 /**
  * @author Created by 11's papa on 2025/8/29
@@ -57,11 +55,13 @@ public class AuthenticationService {
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(request.username());
         String accessToken = jwtTokenProvider.generateToken(request.username(), "access_token");
 //        String refreshToken = jwtTokenProvider.generateToken(authenticate, "refresh_token");
-        UserResponse userResponse = QueryChain.of(SystemUser.class)
-                .select(SYSTEM_USER.ID, SYSTEM_USER.NAME, SYSTEM_USER.EMAIL, SYSTEM_USER.LAST_ORGANIZATION_ID, SYSTEM_USER.LAST_PROJECT_ID, SYSTEM_USER.AVATAR)
-                .from(SYSTEM_USER).where(SYSTEM_USER.NAME.eq(authenticate.getName()))
-                .oneAs(UserResponse.class);
-        return new AuthenticationResponse(accessToken, refreshToken.getToken(), userResponse);
+//        UserResponse userResponse = QueryChain.of(SystemUser.class)
+//                .select(SYSTEM_USER.ID, SYSTEM_USER.NAME, SYSTEM_USER.EMAIL, SYSTEM_USER.LAST_ORGANIZATION_ID, SYSTEM_USER.LAST_PROJECT_ID, SYSTEM_USER.AVATAR)
+//                .from(SYSTEM_USER).where(SYSTEM_USER.NAME.eq(authenticate.getName()))
+//                .oneAs(UserResponse.class);
+        UserDTO user = getUser(authenticate.getName());
+        autoSwitch(user);
+        return new AuthenticationResponse(accessToken, refreshToken.getToken(), user);
     }
 
     public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
@@ -82,6 +82,18 @@ public class AuthenticationService {
         }
         tokenBlacklistService.addToBlacklist(request);
         return ResultHolder.success("Logout successful");
+    }
+
+    private UserDTO getUser(String username) {
+        UserDTO userDTO = QueryChain.of(SystemUser.class).where(SystemUser::getName).eq(username).oneAs(UserDTO.class);
+        if (userDTO == null) {
+            return null;
+        }
+        UserRolePermissionDTO dto = getUserRolePermission(userDTO.getId());
+        userDTO.setUserRoleRelations(dto.getUserRoleRelations());
+        userDTO.setUserRoles(dto.getUserRoles());
+        userDTO.setUserRolePermissions(dto.getList());
+        return userDTO;
     }
 
     public UserDTO getUserDTO(String userId) {
