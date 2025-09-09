@@ -4,7 +4,9 @@ import cn.master.hub.dto.UserCreateInfo;
 import cn.master.hub.dto.request.BasePageRequest;
 import cn.master.hub.dto.request.UserBatchCreateRequest;
 import cn.master.hub.dto.response.UserBatchCreateResponse;
+import cn.master.hub.entity.SystemProject;
 import cn.master.hub.entity.SystemUser;
+import cn.master.hub.entity.UserRoleRelation;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.result.ResultCode;
@@ -14,14 +16,18 @@ import cn.master.hub.service.SystemUserService;
 import cn.master.hub.service.log.UserLogService;
 import cn.master.hub.util.JacksonUtils;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.hub.entity.table.SystemProjectTableDef.SYSTEM_PROJECT;
 import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
 
 /**
@@ -73,6 +79,52 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
         user.setEnable(true);
         mapper.insert(user);
         return "";
+    }
+
+    @Override
+    public void updateUser(SystemUser user) {
+        if (StringUtils.isNotBlank(user.getEmail())) {
+            boolean exists = queryChain().where(SYSTEM_USER.EMAIL.eq(user.getEmail()).and(SYSTEM_USER.ID.ne(user.getId()))).exists();
+            if (exists) {
+                throw new CustomException(Translator.get("user_email_already_exists"));
+            }
+        }
+        SystemUser userFromDB = mapper.selectOneById(user.getId());
+        if (user.getLastOrganizationId() != null && !Strings.CS.equals(user.getLastOrganizationId(), userFromDB.getLastOrganizationId())
+                && !isSuperUser(user.getId())) {
+            List<SystemProject> projects = getProjectListByWsAndUserId(user.getId(), user.getLastOrganizationId());
+            if (!projects.isEmpty()) {
+                // 如果传入的 last_project_id 是 last_organization_id 下面的
+                boolean present = projects.stream().anyMatch(p -> Strings.CS.equals(p.getId(), user.getLastProjectId()));
+                if (!present) {
+                    user.setLastProjectId(projects.getFirst().getId());
+                }
+            } else {
+                user.setLastProjectId(StringUtils.EMPTY);
+            }
+        }
+    }
+
+    private List<SystemProject> getProjectListByWsAndUserId(String id, String lastOrganizationId) {
+        List<SystemProject> projects = QueryChain.of(SystemProject.class)
+                .where(SYSTEM_PROJECT.ORGANIZATION_ID.eq(lastOrganizationId).and(SYSTEM_PROJECT.ENABLE.eq(true))).list();
+        List<UserRoleRelation> userRoleRelations = QueryChain.of(UserRoleRelation.class).where(UserRoleRelation::getUserId).eq(id).list();
+        List<SystemProject> projectList = new ArrayList<>();
+        userRoleRelations.forEach(userRoleRelation -> projects.forEach(project -> {
+            if (Strings.CS.equals(userRoleRelation.getSourceId(), project.getId())) {
+                if (!projectList.contains(project)) {
+                    projectList.add(project);
+                }
+            }
+        }));
+        return projectList;
+    }
+
+    @Override
+    public boolean isSuperUser(String id) {
+        return QueryChain.of(UserRoleRelation.class)
+                .where(UserRoleRelation::getUserId).eq(id).and(UserRoleRelation::getRoleId).eq("admin")
+                .exists();
     }
 
     private List<UserCreateInfo> saveUserAndRole(UserBatchCreateRequest userCreateDTO, String source, String operator, String requestPath) {

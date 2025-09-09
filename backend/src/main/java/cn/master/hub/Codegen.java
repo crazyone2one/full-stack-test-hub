@@ -19,7 +19,7 @@ public class Codegen {
         dataSource.setPassword("123456");
 
         //创建配置内容，两种风格都可以。
-        GlobalConfig globalConfig = createGlobalConfigUseStyle1("system_user");
+        GlobalConfig globalConfig = createGlobalConfigUseStyle1("user_role_relation");
         //GlobalConfig globalConfig = createGlobalConfigUseStyle2();
 
         //通过 datasource 和 globalConfig 创建代码生成器
@@ -32,7 +32,7 @@ public class Codegen {
     public static GlobalConfig createGlobalConfigUseStyle1(String tableName) {
         //创建配置内容
         GlobalConfig globalConfig = new GlobalConfig();
-
+        globalConfig.getJavadocConfig().setAuthor("11's papa");
         //设置根包
         globalConfig.getPackageConfig().setBasePackage("cn.master.hub");
         globalConfig.setSourceDir(System.getProperty("user.dir") + "/backend/src/main/java");
@@ -47,10 +47,12 @@ public class Codegen {
         //设置项目的JDK版本，项目的JDK为14及以上时建议设置该项，小于14则可以不设置
         globalConfig.setEntityJdkVersion(21);
         globalConfig.getEntityConfig().setWithSwagger(true).setSwaggerVersion(EntityConfig.SwaggerVersion.DOC);
-        globalConfig.enableController();
+//        globalConfig.enableController();
         //设置生成 mapper
         globalConfig.setMapperGenerateEnable(true);
         globalConfig.setServiceGenerateEnable(true);
+        globalConfig.getServiceConfig().setClassPrefix("Base");
+        globalConfig.getServiceImplConfig().setClassPrefix("Base");
         globalConfig.setServiceImplGenerateEnable(true);
         //可以单独配置某个列
         ColumnConfig columnConfig = new ColumnConfig();

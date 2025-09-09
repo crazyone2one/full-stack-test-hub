@@ -21,9 +21,12 @@ spring:
           threadPool:
             threadCount: 10
             threadsInheritContextClassLoaderOfInitializingThread: true
+  messages:
+    basename: i18n/commons,i18n/api,i18n/bug,i18n/case,i18n/plan,i18n/project,i18n/system
+    default-locale: zh_CN
 jwt:
   secret: K4lgrcqOP576NhrtYJhuQD8DdMYfZtb58hWdJaTjPbk=
-  access-token-validity-in-seconds: 300000 #5m
+  access-token-validity-in-seconds: 7200000 #2h
   refresh-token-validity-in-seconds: 604800000 # 7d
 mybatis-flex:
   datasource:

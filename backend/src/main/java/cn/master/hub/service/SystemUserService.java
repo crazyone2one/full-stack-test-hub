@@ -21,4 +21,8 @@ public interface SystemUserService extends IService<SystemUser> {
     UserBatchCreateResponse addUser(UserBatchCreateRequest userCreateDTO, String name, String currentUserName);
 
     String addUser(UserCreateInfo userCreateDTO, String name, String currentUserName);
+
+    void updateUser(SystemUser user);
+
+    boolean isSuperUser(String id);
 }

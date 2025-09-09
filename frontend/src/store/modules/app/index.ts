@@ -2,6 +2,9 @@ import {defineStore} from "pinia";
 import {computed, ref} from "vue";
 import type {AppState} from "/@/store/modules/app/types.ts";
 import {projectManagementApis} from "/@/api/modules/project-management.ts";
+import {featureRouteMap} from "/@/router/constants.ts";
+import type {RouteRecordRaw} from "vue-router";
+import {cloneDeep} from "es-toolkit";
 
 const useAppStore = defineStore('app', () => {
     const appState = ref<AppState>({
@@ -11,7 +14,10 @@ const useAppStore = defineStore('app', () => {
         menuCollapse: false,
         loading: false,
         loadingTip: '你不知道你有多幸运...',
-        projectList: []
+        projectList: [],
+        currentMenuConfig: Object.keys(featureRouteMap),
+        topMenus: [],
+        currentTopMenu: {} as RouteRecordRaw
     })
     const currentOrgId = computed(() => {
         return appState.value.currentOrgId
@@ -21,6 +27,12 @@ const useAppStore = defineStore('app', () => {
     })
     const loadingStatus = computed(() => {
         return appState.value.loading
+    })
+    const getCurrentTopMenu = computed(() => {
+        return appState.value.currentTopMenu
+    })
+    const getTopMenus = computed(() => {
+        return appState.value.topMenus
     })
     const setCurrentOrgId = (id: string) => {
         appState.value = {
@@ -75,15 +87,33 @@ const useAppStore = defineStore('app', () => {
             hideLoading();
         }
     };
+    const setCurrentMenuConfig = (menuConfig: string[]) => {
+        appState.value = {
+            ...appState.value,
+            currentMenuConfig: menuConfig
+        };
+    }
+    const setTopMenus = (menus: RouteRecordRaw[] | undefined) => {
+        appState.value = {
+            ...appState.value,
+            topMenus: menus ? [...menus] : []
+        };
+    }
+    const setCurrentTopMenu = (menu: RouteRecordRaw) => {
+        appState.value = {
+            ...appState.value,
+            currentTopMenu: cloneDeep(menu)
+        };
+    }
     return {
         appState,
         currentOrgId,
         currentProjectId,
-        loadingStatus,
+        loadingStatus, getCurrentTopMenu, getTopMenus,
         setCurrentOrgId,
         setCurrentProjectId,
         showLoading,
-        hideLoading, initProjectList
+        hideLoading, initProjectList, setCurrentMenuConfig, setTopMenus, setCurrentTopMenu
     }
 }, {
     persist: {

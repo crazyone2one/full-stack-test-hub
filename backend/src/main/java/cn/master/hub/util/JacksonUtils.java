@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -86,6 +87,30 @@ public class JacksonUtils {
             CollectionType javaType = typeFactory.constructCollectionType(List.class, subType);
             return objectMapper.readValue(content, javaType);
         } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 将对象序列化为JSON格式的字节数组
+     *
+     * @param object 需要序列化为JSON的对象
+     * @return JSON格式的字节数组
+     * @throws RuntimeException 当序列化过程中发生IO异常时抛出
+     */
+    public static byte[] toJSONBytes(Object object) {
+        try {
+            // 使用objectMapper将对象写入为字节数组
+            return objectMapper.writeValueAsBytes(object);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public static <T> List<T> parseArray(String content, Class<T> valueType) {
+        CollectionType javaType = typeFactory.constructCollectionType(List.class, valueType);
+        try {
+            return objectMapper.readValue(content, javaType);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

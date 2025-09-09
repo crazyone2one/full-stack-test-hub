@@ -4,6 +4,7 @@ import {useAppStore} from "/@/store";
 import {authApi} from "/@/api/modules/auth.ts";
 import {clearToken} from "/@/utils/auth.ts";
 import {removeRouteListener} from "/@/utils/route-listener.ts";
+import {composePermissions} from "/@/utils/permissions.ts";
 
 const useUserStore = defineStore('user', {
     state: (): UserState => ({
@@ -12,11 +13,38 @@ const useUserStore = defineStore('user', {
         lastProjectId: '',
         avatar: undefined,
         lastOrganizationId: '',
-        email: ''
+        email: '',
+        phone: '',
     }),
     getters: {
         userInfo(state: UserState): UserState {
             return {...state};
+        },
+        isAdmin(state: UserState): boolean {
+            if (!state.userRolePermissions) return false;
+            return state.userRolePermissions.findIndex((ur) => ur.userRole.id === 'admin') > -1;
+        },
+        currentRole(state: UserState): {
+            projectPermissions: string[];
+            orgPermissions: string[];
+            systemPermissions: string[];
+        } {
+            const appStore = useAppStore();
+
+            state.userRoleRelations?.forEach((ug) => {
+                state.userRolePermissions?.forEach((gp) => {
+                    if (gp.userRole.id === ug.roleId) {
+                        ug.userRolePermissions = gp.userRolePermissions;
+                        ug.userRole = gp.userRole;
+                    }
+                });
+            });
+
+            return {
+                projectPermissions: composePermissions(state.userRoleRelations || [], 'PROJECT', appStore.currentProjectId),
+                orgPermissions: composePermissions(state.userRoleRelations || [], 'ORGANIZATION', appStore.currentOrgId),
+                systemPermissions: composePermissions(state.userRoleRelations || [], 'SYSTEM', 'global'),
+            };
         },
     },
     actions: {

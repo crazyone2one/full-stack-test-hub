@@ -7,6 +7,7 @@ import us.abstracta.jmeter.javadsl.core.TestPlanStats;
 import us.abstracta.jmeter.javadsl.core.postprocessors.DslJsonExtractor;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import static us.abstracta.jmeter.javadsl.JmeterDsl.*;
 
@@ -44,13 +45,22 @@ public class DemoPerformanceTestServiceImpl implements DemoPerformanceTestServic
                                                         .queryLanguage(DslJsonExtractor.JsonQueryLanguage.JSON_PATH)
                                                         .matches("0")
                                         ),
-                                //forLoopController("Loop Controller", 15,
-                                //  //httpSampler("dict-list", "http://172.16.2.15:9190/prod-api/admin-api/system/dict-data/list-all-simple")
-                                //  //  .header("authorization", "Bearer ${accessToken}")
-                                //),
+//                                forLoopController("Loop Controller", 15,
+//                                  httpSampler("dict-list", "http://172.16.2.15:9190/prod-api/admin-api/system/dict-data/list-all-simple")
+//                                    .header("authorization", "Bearer ${accessToken}")
+//                                ),
                                 resultsTreeVisualizer()
                         )
+                                .rampToAndHold(10, Duration.ofSeconds(5), Duration.ofSeconds(20))
+                                .rampToAndHold(100, Duration.ofSeconds(10), Duration.ofSeconds(30))
+                                .rampTo(200, Duration.ofSeconds(10))
+                                .rampToAndHold(100, Duration.ofSeconds(10), Duration.ofSeconds(30))
+                                .rampTo(0, Duration.ofSeconds(5))
+                                .children(
+                                        httpSampler("dict-list", "http://172.16.2.15:9190/prod-api/admin-api/system/dict-data/list-all-simple")
+                                                .header("authorization", "Bearer ${accessToken}")
+                                )
                 ).run();
-        System.out.println(stats);
+
     }
 }

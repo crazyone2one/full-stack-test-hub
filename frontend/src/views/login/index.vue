@@ -6,6 +6,8 @@ import {useForm} from "alova/client";
 import {setToken} from "/@/utils/auth.ts";
 import {useAppStore, useUserStore} from "/@/store";
 import {useRouter} from "vue-router";
+import {NO_PROJECT_ROUTE_NAME, NO_RESOURCE_ROUTE_NAME} from "/@/router/constants.ts";
+import {getFirstRouteNameByPermission, routerNameHasPermission} from "/@/utils/permissions.ts";
 
 // 消息提示
 const message = useMessage();
@@ -49,9 +51,24 @@ const handleLogin = async () => {
       appStore.setCurrentProjectId(user.lastProjectId || '');
       // 登录成功处理
       message.success('登录成功');
-      const route = router.currentRoute.value
-      const redirect = route.query.redirect?.toString()
-      router.replace(redirect ?? route.redirectedFrom?.fullPath ?? '/')
+      const {redirect, ...othersQuery} = router.currentRoute.value.query;
+      const redirectHasPermission =
+          redirect &&
+          ![NO_RESOURCE_ROUTE_NAME, NO_PROJECT_ROUTE_NAME].includes(redirect as string) &&
+          routerNameHasPermission(redirect as string, router.getRoutes());
+      const currentRouteName = getFirstRouteNameByPermission(router.getRoutes());
+      console.log(currentRouteName)
+      router.push({
+        name: redirectHasPermission ? (redirect as string) : currentRouteName,
+        query: {
+          ...othersQuery,
+          orgId: appStore.currentOrgId,
+          pId: appStore.currentProjectId,
+        },
+      });
+      // const route = router.currentRoute.value
+      // const redirect = route.query.redirect?.toString()
+      // router.replace(redirect ?? route.redirectedFrom?.fullPath ?? '/')
     })
   } catch (error) {
     message.error('登录失败: 用户名或密码错误');

@@ -2,7 +2,7 @@ import type {RouteRecordRaw} from "vue-router";
 
 const mainRoutes: RouteRecordRaw[] = [
     {
-        path: '/',
+        path: '/dashboard',
         name: 'dashboard',
         component: () => import('/@/views/dashboard/index.vue'),
         meta: {
@@ -34,13 +34,14 @@ const mainRoutes: RouteRecordRaw[] = [
         }
     }
 ]
-const routes: RouteRecordRaw[] = [
+const routesIgnore: RouteRecordRaw[] = [
     {
         name: 'login',
         path: '/login',
         component: () => import('/@/views/login/index.vue'),
         meta: {
-            title: 'Sign In'
+            title: 'Sign In',
+            requiresAuth: false,
         }
     },
     {
@@ -58,4 +59,4 @@ const routes: RouteRecordRaw[] = [
         }
     }
 ]
-export default routes
+export default routesIgnore

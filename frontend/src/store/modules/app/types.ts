@@ -1,4 +1,5 @@
 import type {ProjectListItem} from "/@/api/types/project.ts";
+import type {RouteRecordRaw} from "vue-router";
 
 export interface AppState {
     currentOrgId: string;
@@ -8,4 +9,7 @@ export interface AppState {
     loading: boolean
     loadingTip: string
     projectList: ProjectListItem[]
+    currentMenuConfig:string[]
+    topMenus: RouteRecordRaw[];
+    currentTopMenu: RouteRecordRaw
 }

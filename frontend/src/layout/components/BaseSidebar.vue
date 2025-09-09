@@ -1,9 +1,10 @@
 <script setup lang="ts">
 
-import {type MenuOption, NA, NLayoutSider, NMenu} from "naive-ui";
+import {type MenuOption, NLayoutSider, NMenu} from "naive-ui";
 import {computed, h, ref, watchEffect} from "vue";
 import BaseIcon from "/@/components/BaseIcon.vue";
 import {RouterLink, useRoute} from "vue-router";
+import {SettingRouteEnum} from "/@/enums/route-enum.ts";
 
 const route = useRoute()
 const currentKey = ref<string>('')
@@ -13,22 +14,22 @@ const collapsed = ref(false)
 const menuOptions = computed(() => {
   return [
     {
-      label: () => h(RouterLink, {to: {name: "dashboard"}}, {default: () => 'Dashboard'}),
-      key: 'dashboard',
+      label: () => h(RouterLink, {to: {name: "workstation"}}, {default: () => 'Dashboard'}),
+      key: 'workstation',
       icon: () => h(BaseIcon, {type: 'Dashboard'}, {})
     },
+    // {
+    //   label: () => h(RouterLink, {to: {name: "cases"}}, {default: () => 'Cases'}),
+    //   key: 'cases',
+    //   icon: () => h(BaseIcon, {type: 'Api'}, {})
+    // },
     {
-      label: () => h(RouterLink, {to: {name: "cases"}}, {default: () => 'Cases'}),
-      key: 'cases',
-      icon: () => h(BaseIcon, {type: 'Api'}, {})
-    },
-    {
-      label: () => h(RouterLink, {to: {name: "plan"}}, {default: () => 'Plan'}),
-      key: 'plan',
+      label: () => h(RouterLink, {to: {name: SettingRouteEnum.SETTING_ORGANIZATION_PROJECT}}, {default: () => '项目'}),
+      key: SettingRouteEnum.SETTING_ORGANIZATION_PROJECT,
       icon: () => h('div', {class: 'i-local-icon_test-tracking_filled'}, {})
     },
     {
-      label: () => h(RouterLink, {to: {name: 'users'}}, {default: () => 'Users'}),
+      label: () => h(RouterLink, {to: {name: SettingRouteEnum.SETTING_SYSTEM_USER_SINGLE}}, {default: () => 'Users'}),
       key: 'users',
       icon: () => h(BaseIcon, {type: 'Users'}, {})
     }

@@ -1,11 +1,11 @@
 import router from "/@/router";
-import {WHITE_LIST} from "/@/router/constants.ts";
 import {useUserStore} from "/@/store";
 
+const whiteRoutes: string[] = ['/login', '/404', '/403', '/500']
 export default function useUser() {
     const isWhiteListPage = () => {
         const currentRoute = router.currentRoute.value;
-        return WHITE_LIST.some((e) => e.path.includes(currentRoute.path));
+        return whiteRoutes.includes(currentRoute.path);
     };
     const logout = async (logoutTo?: string, noRedirect?: boolean) => {
         const userStore = useUserStore();
