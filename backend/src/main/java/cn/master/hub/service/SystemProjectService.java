@@ -2,6 +2,7 @@ package cn.master.hub.service;
 
 import cn.master.hub.dto.request.AddProjectRequest;
 import cn.master.hub.dto.response.ProjectDTO;
+import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.entity.SystemProject;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
@@ -21,4 +22,6 @@ public interface SystemProjectService extends IService<SystemProject> {
     ProjectDTO add(AddProjectRequest addProjectDTO, String createUser, String path, String module);
 
     Page<ProjectDTO> buildUserInfo(Page<ProjectDTO> page);
+
+    ProjectDTO update(UpdateProjectRequest request, String updateUser, String path, String module);
 }

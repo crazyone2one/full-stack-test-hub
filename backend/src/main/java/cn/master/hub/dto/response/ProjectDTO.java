@@ -23,8 +23,8 @@ public class ProjectDTO extends SystemProject {
     private List<UserExtendDTO> adminList;
     @Schema(description = "创建人是否是管理员", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Boolean projectCreateUserIsAdmin;
-    @Schema(description = "模块设置", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-    private List<String> moduleIds;
+//    @Schema(description = "模块设置", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+//    private List<String> moduleIds;
     @Schema(description = "资源池", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private List<ProjectResourcePoolDTO> resourcePoolList;
     @Schema(description = "剩余删除保留天数")

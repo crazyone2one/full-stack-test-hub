@@ -1,5 +1,6 @@
 package cn.master.hub.controller;
 
+import cn.master.hub.dto.OptionDTO;
 import cn.master.hub.entity.SystemOrganization;
 import cn.master.hub.service.SystemOrganizationService;
 import com.mybatisflex.core.paginate.Page;
@@ -19,7 +20,7 @@ import java.util.List;
  */
 @RestController
 @Tag(name = "组织接口")
-@RequestMapping("/organization")
+@RequestMapping("/system/organization")
 @RequiredArgsConstructor
 public class SystemOrganizationController {
 
@@ -32,8 +33,8 @@ public class SystemOrganizationController {
      * @return {@code true} 保存成功，{@code false} 保存失败
      */
     @PostMapping("save")
-    @Operation(description="保存组织")
-    public boolean save(@RequestBody @Parameter(description="组织")SystemOrganization systemOrganization) {
+    @Operation(description = "保存组织")
+    public boolean save(@RequestBody @Parameter(description = "组织") SystemOrganization systemOrganization) {
         return systemOrganizationService.save(systemOrganization);
     }
 
@@ -44,8 +45,8 @@ public class SystemOrganizationController {
      * @return {@code true} 删除成功，{@code false} 删除失败
      */
     @DeleteMapping("remove/{id}")
-    @Operation(description="根据主键删除组织")
-    public boolean remove(@PathVariable @Parameter(description="组织主键") String id) {
+    @Operation(description = "根据主键删除组织")
+    public boolean remove(@PathVariable @Parameter(description = "组织主键") String id) {
         return systemOrganizationService.removeById(id);
     }
 
@@ -56,8 +57,8 @@ public class SystemOrganizationController {
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("update")
-    @Operation(description="根据主键更新组织")
-    public boolean update(@RequestBody @Parameter(description="组织主键") SystemOrganization systemOrganization) {
+    @Operation(description = "根据主键更新组织")
+    public boolean update(@RequestBody @Parameter(description = "组织主键") SystemOrganization systemOrganization) {
         return systemOrganizationService.updateById(systemOrganization);
     }
 
@@ -67,7 +68,7 @@ public class SystemOrganizationController {
      * @return 所有数据
      */
     @GetMapping("list")
-    @Operation(description="查询所有组织")
+    @Operation(description = "查询所有组织")
     public List<SystemOrganization> list() {
         return systemOrganizationService.list();
     }
@@ -79,8 +80,8 @@ public class SystemOrganizationController {
      * @return 组织详情
      */
     @GetMapping("getInfo/{id}")
-    @Operation(description="根据主键获取组织")
-    public SystemOrganization getInfo(@PathVariable @Parameter(description="组织主键") String id) {
+    @Operation(description = "根据主键获取组织")
+    public SystemOrganization getInfo(@PathVariable @Parameter(description = "组织主键") String id) {
         return systemOrganizationService.getById(id);
     }
 
@@ -91,9 +92,14 @@ public class SystemOrganizationController {
      * @return 分页对象
      */
     @GetMapping("page")
-    @Operation(description="分页查询组织")
-    public Page<SystemOrganization> page(@Parameter(description="分页信息") Page<SystemOrganization> page) {
+    @Operation(description = "分页查询组织")
+    public Page<SystemOrganization> page(@Parameter(description = "分页信息") Page<SystemOrganization> page) {
         return systemOrganizationService.page(page);
     }
 
+    @PostMapping("/option/all")
+    @Operation(summary = "系统设置-系统-组织与项目-组织-获取系统所有组织下拉选项")
+    public List<OptionDTO> listAll() {
+        return systemOrganizationService.listAll();
+    }
 }

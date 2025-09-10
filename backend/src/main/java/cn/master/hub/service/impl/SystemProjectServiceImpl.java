@@ -7,15 +7,18 @@ import cn.master.hub.dto.request.AddProjectRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.ProjectAddMemberBatchRequest;
 import cn.master.hub.dto.system.ProjectResourcePoolDTO;
+import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.dto.system.UserExtendDTO;
 import cn.master.hub.entity.*;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.invoker.ProjectServiceInvoker;
+import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.mapper.ProjectTestResourcePoolMapper;
 import cn.master.hub.mapper.SystemProjectMapper;
+import cn.master.hub.mapper.SystemUserMapper;
 import cn.master.hub.mapper.UserRoleRelationMapper;
 import cn.master.hub.service.OperationLogService;
 import cn.master.hub.service.SystemProjectService;
@@ -55,6 +58,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
     private final ProjectServiceInvoker projectServiceInvoker;
     private final UserRoleRelationMapper userRoleRelationMapper;
     private final OperationLogService operationLogService;
+    private final SystemUserMapper systemUserMapper;
 
     @Override
     public List<SystemProject> getUserProject(String organizationId, String currentUserName) {
@@ -133,6 +137,70 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
         return page;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ProjectDTO update(UpdateProjectRequest request, String updateUser, String path, String module) {
+        SystemProject project = new SystemProject();
+        ProjectDTO projectDTO = new ProjectDTO();
+        project.setId(request.getId());
+        project.setName(request.getName());
+        project.setDescription(request.getDescription());
+        project.setOrganizationId(request.getOrganizationId());
+        project.setEnable(request.getEnable());
+        project.setAllResourcePool(request.isAllResourcePool());
+        project.setUpdateUser(updateUser);
+        checkProjectExistByName(project);
+        checkProjectNotExist(project.getId());
+        BeanUtils.copyProperties(project, projectDTO);
+        if (CollectionUtils.isNotEmpty(request.getResourcePoolIds())) {
+            checkResourcePoolExist(request.getResourcePoolIds());
+            List<ProjectTestResourcePool> projectTestResourcePools = new ArrayList<>();
+            projectTestResourcePoolMapper.deleteByCondition(PROJECT_TEST_RESOURCE_POOL.PROJECT_ID.eq(project.getId()));
+            request.getResourcePoolIds().forEach(resourcePoolId -> {
+                ProjectTestResourcePool projectTestResourcePool = ProjectTestResourcePool.builder()
+                        .projectId(project.getId())
+                        .testResourcePoolId(resourcePoolId)
+                        .build();
+                projectTestResourcePools.add(projectTestResourcePool);
+            });
+            projectTestResourcePoolMapper.insertBatch(projectTestResourcePools);
+        } else {
+            projectTestResourcePoolMapper.deleteByCondition(PROJECT_TEST_RESOURCE_POOL.PROJECT_ID.eq(project.getId()));
+        }
+        List<UserRoleRelation> userRoleRelations = QueryChain.of(UserRoleRelation.class).where(USER_ROLE_RELATION.SOURCE_ID.eq(project.getId())
+                .and(USER_ROLE_RELATION.ROLE_ID.eq(InternalUserRole.PROJECT_ADMIN.getValue()))).list();
+        List<String> orgUserIds = userRoleRelations.stream().map(UserRoleRelation::getUserId).toList();
+        List<LogDTO> logDTOList = new ArrayList<>();
+        List<String> deleteIds = orgUserIds.stream().filter(item -> !request.getUserIds().contains(item)).toList();
+        List<String> insertIds = request.getUserIds().stream().filter(item -> !orgUserIds.contains(item)).toList();
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            QueryChain<UserRoleRelation> queryChain = QueryChain.of(UserRoleRelation.class).where(USER_ROLE_RELATION.SOURCE_ID.eq(project.getId())
+                    .and(USER_ROLE_RELATION.USER_ID.in(deleteIds))
+                    .and(USER_ROLE_RELATION.ROLE_ID.eq(InternalUserRole.PROJECT_ADMIN.getValue())));
+            queryChain.list().forEach(userRoleRelation -> {
+                SystemUser user = systemUserMapper.selectOneById(userRoleRelation.getUserId());
+                String logProjectId = OperationLogConstants.SYSTEM;
+                if (Strings.CS.equals(module, OperationLogModule.SETTING_ORGANIZATION_PROJECT)) {
+                    logProjectId = OperationLogConstants.ORGANIZATION;
+                }
+                LogDTO logDTO = new LogDTO(logProjectId, project.getOrganizationId(), userRoleRelation.getId(), updateUser, OperationLogType.DELETE.name(), module, Translator.get("delete") + Translator.get("project_admin") + ": " + user.getName());
+                setLog(logDTO, path, HttpMethodConstants.POST.name(), logDTOList);
+            });
+            userRoleRelationMapper.deleteByQuery(queryChain);
+        }
+        if (CollectionUtils.isNotEmpty(insertIds)) {
+            ProjectAddMemberBatchRequest memberRequest = new ProjectAddMemberBatchRequest();
+            memberRequest.setProjectIds(List.of(project.getId()));
+            memberRequest.setUserIds(insertIds);
+            addProjectAdmin(memberRequest, updateUser, path, OperationLogType.ADD.name(), Translator.get("add"), module);
+        }
+        if (CollectionUtils.isNotEmpty(logDTOList)) {
+            operationLogService.batchAdd(logDTOList);
+        }
+        mapper.update(project);
+        return projectDTO;
+    }
+
     private List<ProjectResourcePoolDTO> getProjectResourcePoolDTOList(List<String> projectIds) {
         return queryChain()
                 .select(PROJECT_TEST_RESOURCE_POOL.PROJECT_ID, TEST_RESOURCE_POOL.ALL_COLUMNS)
@@ -166,7 +234,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
     }
 
     private void addProjectAdmin(ProjectAddMemberBatchRequest request, String createUser, String path, String type, String content, String module) {
-        List<OperationLog> logs = new ArrayList<>();
+        List<LogDTO> logs = new ArrayList<>();
         List<UserRoleRelation> userRoleRelations = new ArrayList<>();
         request.getProjectIds().forEach(projectId -> {
             SystemProject project = mapper.selectOneById(projectId);
@@ -186,11 +254,8 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
                     if (Strings.CS.equals(module, OperationLogModule.SETTING_ORGANIZATION_PROJECT)) {
                         logProjectId = OperationLogConstants.ORGANIZATION;
                     }
-                    OperationLog operationLog = OperationLog.builder()
-                            .projectId(logProjectId).organizationId(project.getOrganizationId())
-                            .sourceId(adminRole.getId()).createUser(createUser).type(type)
-                            .module(module).content(content + Translator.get("project_admin") + ": " + nameMap.get(userId)).build();
-                    setLog(operationLog, path, HttpMethodConstants.POST.name(), logs);
+                    LogDTO logDTO = new LogDTO(logProjectId, project.getOrganizationId(), adminRole.getId(), createUser, type, module, content + Translator.get("project_admin") + ": " + nameMap.get(userId));
+                    setLog(logDTO, path, HttpMethodConstants.POST.name(), logs);
                 }
             });
         });
@@ -213,7 +278,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
     }
 
     private void checkOrgRoleExit(List<String> userIds, String orgId, String createUser, Map<String, String> nameMap, String path, String module) {
-        List<OperationLog> logs = new ArrayList<>();
+        List<LogDTO> logs = new ArrayList<>();
         List<UserRoleRelation> userRoleRelations = QueryChain.of(UserRoleRelation.class).where(UserRoleRelation::getUserId).in(userIds).list();
         //把用户id放到一个新的list
         List<String> orgUserIds = userRoleRelations.stream().map(UserRoleRelation::getUserId).toList();
@@ -226,11 +291,8 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
                             .sourceId(orgId).createUser(createUser).organizationId(orgId)
                             .build();
                     userRoleRelations.add(relation);
-                    OperationLog operationLog = OperationLog.builder()
-                            .projectId(orgId).organizationId(orgId)
-                            .sourceId(relation.getId()).createUser(createUser).type(OperationLogType.ADD.name())
-                            .module(module).content(Translator.get("add") + Translator.get("organization_member") + ": " + nameMap.get(userId)).build();
-                    setLog(operationLog, path, HttpMethodConstants.POST.name(), logs);
+                    LogDTO logDTO = new LogDTO(orgId, orgId, relation.getId(), createUser, OperationLogType.ADD.name(), module, Translator.get("add") + Translator.get("organization_member") + ": " + nameMap.get(userId));
+                    setLog(logDTO, path, HttpMethodConstants.POST.name(), logs);
                 }
             });
             userRoleRelationMapper.insertBatch(userRoleRelation);
@@ -244,7 +306,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
         }
     }
 
-    private void setLog(OperationLog operationLog, String path, String method, List<OperationLog> logs) {
+    private void setLog(LogDTO operationLog, String path, String method, List<LogDTO> logs) {
         operationLog.setPath(path);
         operationLog.setMethod(method);
         operationLog.setOriginalValue(JacksonUtils.toJSONBytes(StringUtils.EMPTY));

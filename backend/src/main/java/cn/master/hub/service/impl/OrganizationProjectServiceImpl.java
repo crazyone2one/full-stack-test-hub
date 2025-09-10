@@ -3,6 +3,7 @@ package cn.master.hub.service.impl;
 import cn.master.hub.dto.request.AddProjectRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
+import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.entity.SystemProject;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.service.OrganizationProjectService;
@@ -43,5 +44,10 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
                 .orderBy(SYSTEM_PROJECT.CREATE_TIME.desc())
                 .pageAs(new Page<>(request.getPage(), request.getPageSize()), ProjectDTO.class);
         return projectService.buildUserInfo(page);
+    }
+
+    @Override
+    public ProjectDTO update(UpdateProjectRequest request, String updateUser) {
+        return projectService.update(request, updateUser, UPDATE_PROJECT, OperationLogModule.SETTING_ORGANIZATION_PROJECT);
     }
 }

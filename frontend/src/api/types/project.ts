@@ -14,3 +14,14 @@ export interface ProjectTableItem {
     description: string;
     memberCount: number;
 }
+export interface CreateOrUpdateOrgProjectParams {
+    id?: string;
+    name: string;
+    description?: string;
+    enable?: boolean;
+    userIds?: string[];
+    moduleIds?: string[];
+    organizationId?: string;
+    resourcePoolIds?: string[];
+    allResourcePool: boolean;
+}

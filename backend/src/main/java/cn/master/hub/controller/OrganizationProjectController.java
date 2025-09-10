@@ -3,9 +3,11 @@ package cn.master.hub.controller;
 import cn.master.hub.dto.request.AddProjectRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
+import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.handler.log.annotation.Log;
 import cn.master.hub.handler.validation.Created;
+import cn.master.hub.handler.validation.Updated;
 import cn.master.hub.service.OrganizationProjectService;
 import cn.master.hub.service.log.OrganizationProjectLogService;
 import cn.master.hub.util.SessionUtils;
@@ -40,5 +42,12 @@ public class OrganizationProjectController {
     @Operation(summary = "系统设置-组织-项目-获取项目列表")
     public Page<ProjectDTO> getProjectList(@Validated @RequestBody OrganizationProjectRequest request) {
         return organizationProjectService.getProjectList(request);
+    }
+
+    @PostMapping("/update")
+    @Operation(summary = "系统设置-组织-项目-编辑")
+    @Log(type = OperationLogType.UPDATE, expression = "#msClass.updateLog(#request)", msClass = OrganizationProjectLogService.class)
+    public ProjectDTO updateProject(@RequestBody @Validated({Updated.class}) UpdateProjectRequest request) {
+        return organizationProjectService.update(request, SessionUtils.getCurrentUserName());
     }
 }
