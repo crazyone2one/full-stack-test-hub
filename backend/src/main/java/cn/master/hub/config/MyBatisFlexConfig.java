@@ -33,6 +33,9 @@ public class MyBatisFlexConfig implements MyBatisFlexCustomizer {
         // 使用自定义规则忽略空集合参数
         // 当参数是空列表或数组时，不拼接查询条件
         QueryColumnBehavior.setIgnoreFunction((object) -> {
+            if (object == null) {
+                return true;
+            }
             if (object instanceof Collection) {
                 return ((Collection<?>) object).isEmpty();
             }

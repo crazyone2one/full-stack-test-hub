@@ -4,6 +4,7 @@ import cn.master.hub.dto.request.AddProjectRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
 import cn.master.hub.dto.system.UpdateProjectRequest;
+import cn.master.hub.dto.system.UserExtendDTO;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.handler.log.annotation.Log;
 import cn.master.hub.handler.validation.Created;
@@ -13,13 +14,13 @@ import cn.master.hub.service.log.OrganizationProjectLogService;
 import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author Created by 11's papa on 2025/9/10
@@ -50,4 +51,11 @@ public class OrganizationProjectController {
     public ProjectDTO updateProject(@RequestBody @Validated({Updated.class}) UpdateProjectRequest request) {
         return organizationProjectService.update(request, SessionUtils.getCurrentUserName());
     }
+    @GetMapping("/user-admin-list/{organizationId}")
+    @Operation(summary = "系统设置-组织-项目-获取项目管理员下拉选项")
+    public List<UserExtendDTO> getUserAdminList(@PathVariable String organizationId, @Schema(description = "查询关键字，根据邮箱和用户名查询")
+    @RequestParam(value = "keyword", required = false) String keyword) {
+        return organizationProjectService.getUserAdminList(organizationId, keyword);
+    }
+
 }

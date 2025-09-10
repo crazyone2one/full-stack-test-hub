@@ -4,17 +4,27 @@ import cn.master.hub.dto.request.AddProjectRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
 import cn.master.hub.dto.system.UpdateProjectRequest;
+import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.entity.SystemOrganization;
 import cn.master.hub.entity.SystemProject;
+import cn.master.hub.entity.SystemUser;
+import cn.master.hub.handler.Translator;
+import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.service.OrganizationProjectService;
 import cn.master.hub.service.SystemProjectService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.query.QueryMethods;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 import static cn.master.hub.entity.table.SystemOrganizationTableDef.SYSTEM_ORGANIZATION;
 import static cn.master.hub.entity.table.SystemProjectTableDef.SYSTEM_PROJECT;
+import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
+import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 
 /**
  * @author Created by 11's papa on 2025/9/10
@@ -49,5 +59,24 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
     @Override
     public ProjectDTO update(UpdateProjectRequest request, String updateUser) {
         return projectService.update(request, updateUser, UPDATE_PROJECT, OperationLogModule.SETTING_ORGANIZATION_PROJECT);
+    }
+
+    @Override
+    public List<UserExtendDTO> getUserAdminList(String organizationId, String keyword) {
+        checkOrgIsExist(organizationId);
+        return QueryChain.of(SystemUser.class)
+                .select(QueryMethods.distinct(SYSTEM_USER.ID, SYSTEM_USER.NAME, SYSTEM_USER.EMAIL,SYSTEM_USER.CREATE_TIME))
+                .from(SYSTEM_USER).leftJoin(USER_ROLE_RELATION).on(USER_ROLE_RELATION.USER_ID.eq(SYSTEM_USER.ID))
+                .where(USER_ROLE_RELATION.SOURCE_ID.eq(organizationId))
+                .and(SYSTEM_USER.NAME.like(keyword).or(SYSTEM_USER.EMAIL.like(keyword)))
+                .orderBy(SYSTEM_USER.CREATE_TIME.desc()).limit(1000)
+                .listAs(UserExtendDTO.class);
+    }
+
+    private void checkOrgIsExist(String organizationId) {
+        boolean exists = QueryChain.of(SystemOrganization.class).where(SYSTEM_ORGANIZATION.ID.eq(organizationId)).exists();
+        if (!exists) {
+            throw new CustomException(Translator.get("organization_not_exists"));
+        }
     }
 }

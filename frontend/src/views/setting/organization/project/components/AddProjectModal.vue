@@ -5,6 +5,8 @@ import {computed, ref} from "vue";
 import {useForm} from "alova/client";
 import {projectManagementApis} from "/@/api/modules/project-management.ts";
 import {useAppStore} from "/@/store";
+import UserSelector from "/@/components/user-selector/index.vue";
+import {UserRequestTypeEnum} from "/@/components/user-selector/utils.ts";
 
 const props = defineProps<{
   currentProject?: CreateOrUpdateOrgProjectParams;
@@ -24,6 +26,7 @@ const rules: FormRules = {
     {required: true, message: '项目名称不能为空', trigger: ['blur', 'input'],},
     {max: 255, message: '名称不能超过 255 个字符'}
   ],
+  userIds: {type: 'array', required: true, message: '项目管理员不能为空', trigger: ['blur', 'input'],},
   // allResourcePool: {required: showPoolModuleIds.some((item) => form.moduleIds?.includes(item)), message: '资源池不能为空', trigger: ['blur', 'input'],}
 }
 const moduleOption = [
@@ -85,6 +88,14 @@ const handleSubmit = () => {
         <n-form-item label="所属组织" path="organizationId">
           <n-select v-model:value="form.organizationId" disabled :options="affiliatedOrgOption"
                     placeholder="请选择所属组织"/>
+        </n-form-item>
+        <n-form-item label="项目管理员" path="userIds">
+          <user-selector v-model:model-value="form.userIds"
+                         :type="UserRequestTypeEnum.ORGANIZATION_PROJECT_ADMIN"
+                         placeholder="请选择项目管理员"
+                         :load-option-params="{ organizationId: currentOrgId, }"
+                         :at-least-one="true"
+          />
         </n-form-item>
         <n-form-item label="启用模块" path="module">
           <n-checkbox-group v-model:value="form.moduleIds">
