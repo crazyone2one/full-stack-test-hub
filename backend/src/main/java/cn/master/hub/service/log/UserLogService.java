@@ -1,7 +1,12 @@
 package cn.master.hub.service.log;
 
+import cn.master.hub.constants.HttpMethodConstants;
+import cn.master.hub.constants.OperationLogConstants;
 import cn.master.hub.dto.UserCreateInfo;
-import cn.master.hub.entity.OperationLog;
+import cn.master.hub.handler.log.LogDTO;
+import cn.master.hub.handler.log.LogDTOBuilder;
+import cn.master.hub.handler.log.OperationLogModule;
+import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.util.JacksonUtils;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
@@ -16,21 +21,21 @@ import java.util.List;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class UserLogService {
-    public List<OperationLog> getBatchAddLogs(@Valid List<UserCreateInfo> userList, String operator, String requestPath) {
-        List<OperationLog> logs = new ArrayList<>();
+    public List<LogDTO> getBatchAddLogs(@Valid List<UserCreateInfo> userList, String operator, String requestPath) {
+        List<LogDTO> logs = new ArrayList<>();
         userList.forEach(user -> {
-            OperationLog log = OperationLog.builder()
-                    .projectId("SYSTEM")
-                    .organizationId("SYSTEM")
-                    .type("ADD")
-                    .module("SETTING_SYSTEM_USER_SINGLE")
-                    .method("POST")
+            LogDTO log = LogDTOBuilder.builder()
+                    .projectId(OperationLogConstants.SYSTEM)
+                    .organizationId(OperationLogConstants.SYSTEM)
+                    .type(OperationLogType.ADD.name())
+                    .module(OperationLogModule.SETTING_SYSTEM_USER_SINGLE)
+                    .method(HttpMethodConstants.POST.name())
                     .path(requestPath)
                     .sourceId(user.getId())
                     .content(user.getName() + "(" + user.getEmail() + ")")
                     .originalValue(JacksonUtils.toJSONBytes(user))
                     .createUser(operator)
-                    .build();
+                    .build().getLogDTO();
             logs.add(log);
         });
         return logs;

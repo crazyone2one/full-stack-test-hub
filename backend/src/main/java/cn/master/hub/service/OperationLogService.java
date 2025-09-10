@@ -1,7 +1,8 @@
 package cn.master.hub.service;
 
-import com.mybatisflex.core.service.IService;
 import cn.master.hub.entity.OperationLog;
+import cn.master.hub.handler.log.LogDTO;
+import com.mybatisflex.core.service.IService;
 
 import java.util.List;
 
@@ -14,5 +15,5 @@ import java.util.List;
 public interface OperationLogService extends IService<OperationLog> {
     void add(OperationLog log);
 
-    void batchAdd(List<OperationLog> logs);
+    void batchAdd(List<LogDTO> logs);
 }

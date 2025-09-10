@@ -1,6 +1,7 @@
 package cn.master.hub.handler.log.aspect;
 
 import cn.master.hub.entity.OperationLog;
+import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.handler.log.annotation.Log;
 import cn.master.hub.service.OperationLogService;
@@ -49,7 +50,7 @@ public class OperationLogAspect {
      */
     private final StandardReflectionParameterNameDiscoverer discoverer = new StandardReflectionParameterNameDiscoverer();
     private final static String ID = "id";
-    private final ThreadLocal<List<OperationLog>> beforeValues = new ThreadLocal<>();
+    private final ThreadLocal<List<LogDTO>> beforeValues = new ThreadLocal<>();
 
     private final ThreadLocal<String> localUser = new ThreadLocal<>();
 
@@ -153,7 +154,7 @@ public class OperationLogAspect {
     }
 
     private void save(Object result) {
-        List<OperationLog> logDTOList = beforeValues.get();
+        List<LogDTO> logDTOList = beforeValues.get();
         if (CollectionUtils.isEmpty(logDTOList)) {
             return;
         }
@@ -203,7 +204,7 @@ public class OperationLogAspect {
         try {
             if (result != null) {
                 String resultStr = JacksonUtils.toJSONString(result);
-                Map object = JacksonUtils.parseMap(resultStr);
+                Map<String, Object> object = JacksonUtils.parseMap(resultStr);
                 if (MapUtils.isNotEmpty(object) && object.containsKey(ID)) {
                     Object nameValue = object.get(ID);
                     if (ObjectUtils.isNotEmpty(nameValue)) {
@@ -229,14 +230,19 @@ public class OperationLogAspect {
                 return;
             }
 
-            if (obj instanceof List<?>) {
-                mergeLists(beforeValues.get(), (List<OperationLog>) obj);
-            } else if (obj instanceof OperationLog log) {
+            if (obj instanceof List<?> rawList) {
+//                mergeLists(beforeValues.get(), (List<LogDTO>) obj);
+                if (!rawList.isEmpty() && rawList.getFirst() instanceof LogDTO) {
+                    @SuppressWarnings("unchecked")
+                    List<LogDTO> typedList = (List<LogDTO>) rawList;
+                    mergeLists(beforeValues.get(), typedList);
+                }
+            } else if (obj instanceof LogDTO logDTO) {
                 if (!beforeValues.get().isEmpty()) {
-                    beforeValues.get().getFirst().setModifiedValue(log.getOriginalValue());
+                    beforeValues.get().getFirst().setModifiedValue(logDTO.getOriginalValue());
                 } else {
                     beforeValues.set(new ArrayList<>() {{
-                        this.add(log);
+                        this.add(logDTO);
                     }});
                 }
             }
@@ -246,7 +252,7 @@ public class OperationLogAspect {
         }
     }
 
-    private void mergeLists(List<OperationLog> beforeLogs, List<OperationLog> postLogs) {
+    private void mergeLists(List<LogDTO> beforeLogs, List<LogDTO> postLogs) {
         if (CollectionUtils.isEmpty(beforeLogs) && !postLogs.isEmpty()) {
             beforeValues.set(postLogs);
             return;
@@ -254,7 +260,7 @@ public class OperationLogAspect {
         if (CollectionUtils.isEmpty(beforeLogs) && CollectionUtils.isEmpty(postLogs)) {
             return;
         }
-        Map<String, OperationLog> postDto = postLogs.stream().collect(Collectors.toMap(OperationLog::getSourceId, item -> item));
+        Map<String, LogDTO> postDto = postLogs.stream().collect(Collectors.toMap(LogDTO::getSourceId, item -> item));
         beforeLogs.forEach(item -> {
             OperationLog post = postDto.get(item.getSourceId());
             if (post != null) {
@@ -271,11 +277,16 @@ public class OperationLogAspect {
             if (obj == null) {
                 return;
             }
-            if (obj instanceof List<?>) {
-                beforeValues.set((List<OperationLog>) obj);
+            if (obj instanceof List<?> rawList) {
+//                beforeValues.set((List<LogDTO>) obj);
+                if (!rawList.isEmpty() && rawList.getFirst() instanceof LogDTO) {
+                    @SuppressWarnings("unchecked")
+                    List<LogDTO> typedList = (List<LogDTO>) rawList;
+                    beforeValues.set(typedList);
+                }
             } else {
-                List<OperationLog> LogDTOs = new ArrayList<>();
-                LogDTOs.add((OperationLog) obj);
+                List<LogDTO> LogDTOs = new ArrayList<>();
+                LogDTOs.add((LogDTO) obj);
                 beforeValues.set(LogDTOs);
             }
 

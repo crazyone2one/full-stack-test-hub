@@ -2,6 +2,7 @@ package cn.master.hub.service.impl;
 
 import cn.master.hub.entity.OperationHistory;
 import cn.master.hub.entity.OperationLog;
+import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.mapper.OperationHistoryMapper;
 import cn.master.hub.mapper.OperationLogMapper;
 import cn.master.hub.service.OperationLogService;
@@ -41,7 +42,7 @@ public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, Ope
     }
 
     @Override
-    public void batchAdd(List<OperationLog> logs) {
+    public void batchAdd(List<LogDTO> logs) {
         if (CollectionUtils.isEmpty(logs)) {
             return;
         }

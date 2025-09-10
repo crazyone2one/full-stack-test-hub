@@ -117,7 +117,7 @@ public class JacksonUtils {
         }
     }
 
-    public static Map parseMap(String jsonObject) {
+    public static Map<String, Object> parseMap(String jsonObject) {
         try {
             return objectMapper.readValue(jsonObject, new TypeReference<>() {
             });
