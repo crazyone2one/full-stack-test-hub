@@ -12,5 +12,7 @@ import java.util.List;
  * @since 2025-09-04
  */
 public interface OperationLogService extends IService<OperationLog> {
+    void add(OperationLog log);
+
     void batchAdd(List<OperationLog> logs);
 }

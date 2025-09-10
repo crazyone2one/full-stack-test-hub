@@ -26,6 +26,21 @@ public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, Ope
     private final OperationHistoryMapper operationHistoryMapper;
 
     @Override
+    public void add(OperationLog log) {
+        if (StringUtils.isBlank(log.getProjectId())) {
+            log.setProjectId("none");
+        }
+        if (StringUtils.isBlank(log.getCreateUser())) {
+            log.setCreateUser("admin");
+        }
+        log.setContent(subStrContent(log.getContent()));
+        mapper.insert(log);
+        if (log.getHistory()) {
+            operationHistoryMapper.insert(getHistory(log));
+        }
+    }
+
+    @Override
     public void batchAdd(List<OperationLog> logs) {
         if (CollectionUtils.isEmpty(logs)) {
             return;
