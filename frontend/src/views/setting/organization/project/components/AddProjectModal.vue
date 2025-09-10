@@ -39,7 +39,12 @@ const moduleOption = [
   // { label: 'menu.performanceTest', value: 'loadTest' },
 ];
 const affiliatedOrgOption = ref<SelectOption[]>([]);
-const {form, reset, loading} = useForm(formData => projectManagementApis.createOrUpdateProjectByOrg(formData), {
+const {
+  form,
+  reset,
+  loading,
+  send: submit,
+} = useForm(formData => projectManagementApis.createOrUpdateProjectByOrg(formData), {
   immediate: false,
   initialForm: {
     name: '',
@@ -53,15 +58,19 @@ const {form, reset, loading} = useForm(formData => projectManagementApis.createO
   }
 })
 
-const handleCancel = () => {
-  emit('cancel', false)
+const handleCancel = (shouldSearch: boolean) => {
+  emit('cancel', shouldSearch)
   reset()
   formRef.value?.restoreValidation()
 }
 const handleSubmit = () => {
   formRef.value?.validate(errors => {
     if (!errors) {
-      console.log(form.value)
+      submit().then(() => {
+        window.$message.success('创建项目成功');
+        appStore.initProjectList();
+        handleCancel(true)
+      });
     }
   })
 }
@@ -135,8 +144,8 @@ const handleSubmit = () => {
           </n-tooltip>
         </div>
         <div class="flex flex-row gap-[14px]">
-          <n-button secondary :disabled="loading" @click="handleCancel">取消</n-button>
-          <n-button type="primary" @click="handleSubmit">
+          <n-button secondary :loading="loading" @click="handleCancel">取消</n-button>
+          <n-button type="primary" :loading="loading" @click="handleSubmit">
             {{ isEdit ? '确认' : '创建' }}
           </n-button>
         </div>

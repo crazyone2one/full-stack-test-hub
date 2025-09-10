@@ -240,7 +240,10 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
             SystemProject project = mapper.selectOneById(projectId);
             Map<String, String> nameMap = addUserPre(request.getUserIds(), createUser, path, module, projectId, project);
             request.getUserIds().forEach(userId -> {
-                long count = QueryChain.of(UserRoleRelation.class).count();
+                long count = QueryChain.of(UserRoleRelation.class)
+                        .where(USER_ROLE_RELATION.USER_ID.eq(userId).and(USER_ROLE_RELATION.SOURCE_ID.eq(projectId))
+                                .and(USER_ROLE_RELATION.ROLE_ID.eq(InternalUserRole.PROJECT_ADMIN.getValue())))
+                        .count();
                 if (count == 0) {
                     UserRoleRelation adminRole = UserRoleRelation.builder()
                             .userId(userId)
@@ -295,7 +298,9 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
                     setLog(logDTO, path, HttpMethodConstants.POST.name(), logs);
                 }
             });
-            userRoleRelationMapper.insertBatch(userRoleRelation);
+            if (CollectionUtils.isNotEmpty(userRoleRelation)) {
+                userRoleRelationMapper.insertBatch(userRoleRelation);
+            }
         }
         operationLogService.batchAdd(logs);
     }
