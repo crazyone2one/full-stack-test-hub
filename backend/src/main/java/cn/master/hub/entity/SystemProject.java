@@ -8,6 +8,7 @@ import com.mybatisflex.annotation.Table;
 import com.mybatisflex.core.handler.JacksonTypeHandler;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -112,4 +113,7 @@ public class SystemProject implements Serializable {
     @Schema(description = "是否删除")
     private Boolean deleted;
 
+    @Schema(description = "全部资源池", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull(message = "{project.all_resource_pool.not_blank}", groups = {Created.class})
+    private Boolean allResourcePool;
 }

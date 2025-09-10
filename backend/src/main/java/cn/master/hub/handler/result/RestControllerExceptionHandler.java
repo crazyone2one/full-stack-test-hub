@@ -4,6 +4,7 @@ import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.exception.IResultCode;
 import cn.master.hub.util.ServiceUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.Map;
 /**
  * @author Created by 11's papa on 2025/8/29
  */
+@Slf4j
 @RestControllerAdvice
 public class RestControllerExceptionHandler {
     /**
@@ -72,6 +74,7 @@ public class RestControllerExceptionHandler {
 
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ResultHolder> handleException(Exception e) {
+        log.error("系统异常:", e);
         return ResponseEntity.internalServerError()
                 .body(ResultHolder.error(ResultCode.FAILED.getCode(),
                         e.getMessage(), getStackTraceAsString(e)));

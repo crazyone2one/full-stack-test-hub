@@ -19,6 +19,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Created by 11's papa on 2025/8/29
@@ -106,11 +107,21 @@ public class JacksonUtils {
             throw new RuntimeException(e);
         }
     }
+
     public static <T> List<T> parseArray(String content, Class<T> valueType) {
         CollectionType javaType = typeFactory.constructCollectionType(List.class, valueType);
         try {
             return objectMapper.readValue(content, javaType);
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Map parseMap(String jsonObject) {
+        try {
+            return objectMapper.readValue(jsonObject, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
