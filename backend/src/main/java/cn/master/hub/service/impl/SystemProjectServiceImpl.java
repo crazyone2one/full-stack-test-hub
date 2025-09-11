@@ -81,6 +81,9 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
                 .description(addProjectDTO.getDescription())
                 .build();
         checkProjectExistByName(systemProject);
+        if (CollectionUtils.isNotEmpty(addProjectDTO.getModuleIds())) {
+            systemProject.setModuleSetting(addProjectDTO.getModuleIds());
+        }
         BeanUtils.copyProperties(systemProject, projectDTO);
 
         mapper.insert(systemProject);

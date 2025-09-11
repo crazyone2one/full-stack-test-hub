@@ -68,7 +68,6 @@ const useAppStore = defineStore('app', () => {
         try {
             showLoading('加载项目列表中...');
             const projects = await projectManagementApis.fetchProjectList(appState.value.currentOrgId);
-
             appState.value = {
                 ...appState.value,
                 projectList: projects

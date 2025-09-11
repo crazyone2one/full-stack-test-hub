@@ -5,7 +5,9 @@ import {type SelectOption} from "naive-ui";
 
 
 export const projectManagementApis = {
-    fetchProjectList: (organizationId: string) => get<Array<ProjectListItem>>(`/project/list/options/${organizationId}`),
+    fetchProjectList: (organizationId: string) => get<Array<ProjectListItem>>(`/project/list/options/${organizationId}`, {}, {
+        cacheFor: 0
+    }),
     fetchAdminByProjectByOrg: (organizationId: string, keyword: string) =>
         get<Array<IUserSelectorOption>>(`organization/project/user-admin-list/${organizationId}`, {keyword}),
     // 获取组织下拉选项

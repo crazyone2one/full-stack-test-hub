@@ -82,7 +82,7 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <n-modal v-model:show="showModal" preset="dialog" title="Dialog" @close="handleCancel">
+  <n-modal v-model:show="showModal" preset="dialog" title="Dialog" @close="handleCancel(false)">
     <template #header>
       <div v-if="isEdit" class="flex">
         更新项目
@@ -142,7 +142,7 @@ const handleSubmit = () => {
     <template #action>
       <div class="flex flex-row justify-between">
         <div class="flex flex-row items-center gap-[4px]">
-          <n-switch size="small"/>
+          <n-switch v-model:value="form.enable" size="small"/>
           <span>状态</span>
           <n-tooltip>
             <template #trigger>
@@ -152,7 +152,7 @@ const handleSubmit = () => {
           </n-tooltip>
         </div>
         <div class="flex flex-row gap-[14px]">
-          <n-button secondary :loading="loading" @click="handleCancel">取消</n-button>
+          <n-button secondary :loading="loading" @click="handleCancel(false)">取消</n-button>
           <n-button type="primary" :loading="loading" @click="handleSubmit">
             {{ isEdit ? '确认' : '创建' }}
           </n-button>
