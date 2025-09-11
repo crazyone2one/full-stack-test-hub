@@ -26,6 +26,10 @@ const rules: FormRules = {
     {required: true, message: '项目名称不能为空', trigger: ['blur', 'input'],},
     {max: 255, message: '名称不能超过 255 个字符'}
   ],
+  projectCode: [
+    {required: true, message: '项目名称不能为空', trigger: ['blur', 'input'],},
+    {max: 255, message: '名称不能超过 255 个字符'}
+  ],
   userIds: {type: 'array', required: true, message: '项目管理员不能为空', trigger: ['blur', 'input'],},
   // allResourcePool: {required: showPoolModuleIds.some((item) => form.moduleIds?.includes(item)), message: '资源池不能为空', trigger: ['blur', 'input'],}
 }
@@ -48,6 +52,7 @@ const {
   immediate: false,
   initialForm: {
     name: '',
+    projectCode: '',
     userIds: [],
     organizationId: currentOrgId.value,
     description: '',
@@ -93,6 +98,9 @@ const handleSubmit = () => {
       >
         <n-form-item label="项目名称" path="name">
           <n-input v-model:value="form.name" clearable placeholder="请输入项目名称，不可与其他项目名称重复"/>
+        </n-form-item>
+        <n-form-item label="项目编码" path="projectCode">
+          <n-input v-model:value="form.projectCode" clearable placeholder="请输入项目编码，不可与其他项目编码重复"/>
         </n-form-item>
         <n-form-item label="所属组织" path="organizationId">
           <n-select v-model:value="form.organizationId" disabled :options="affiliatedOrgOption"

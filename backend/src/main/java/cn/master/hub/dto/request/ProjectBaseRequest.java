@@ -23,6 +23,11 @@ public class ProjectBaseRequest {
     @Size(min = 1, max = 50, message = "{project.organization_id.length_range}", groups = {Created.class, Updated.class})
     private String organizationId;
 
+    @Schema(description = "项目编码", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "{project.organization_id.not_blank}", groups = {Created.class, Updated.class})
+    @Size(min = 1, max = 50, message = "{project.organization_id.length_range}", groups = {Created.class, Updated.class})
+    private String projectCode;
+
     @Schema(description = "项目名称", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "{project.name.not_blank}", groups = {Created.class, Updated.class})
     @Size(min = 1, max = 255, message = "{project.name.length_range}", groups = {Created.class, Updated.class})

@@ -17,6 +17,7 @@ export interface ProjectTableItem {
 export interface CreateOrUpdateOrgProjectParams {
     id?: string;
     name: string;
+    projectCode: string;
     description?: string;
     enable?: boolean;
     userIds?: string[];

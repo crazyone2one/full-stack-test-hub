@@ -72,6 +72,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
         ProjectDTO projectDTO = new ProjectDTO();
         SystemProject systemProject = SystemProject.builder()
                 .name(addProjectDTO.getName())
+                .projectCode(addProjectDTO.getProjectCode())
                 .organizationId(addProjectDTO.getOrganizationId())
                 .createUser(createUser)
                 .updateUser(createUser)
@@ -329,6 +330,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
     private void checkProjectExistByName(SystemProject systemProject) {
         boolean exists = queryChain().where(SYSTEM_PROJECT.NAME.eq(systemProject.getName())
                 .and(SYSTEM_PROJECT.ORGANIZATION_ID.eq(systemProject.getOrganizationId()))
+                .and(SYSTEM_PROJECT.PROJECT_CODE.eq(systemProject.getProjectCode()))
                 .and(SYSTEM_PROJECT.ID.ne(systemProject.getId()))).exists();
         if (exists) {
             throw new CustomException(Translator.get("project_name_already_exists"));

@@ -52,6 +52,11 @@ public class SystemProject implements Serializable {
     @Schema(description = "项目编号")
     private Long num;
 
+    @Schema(description = "项目编码", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "{project.organization_id.not_blank}", groups = {Created.class, Updated.class})
+    @Size(min = 1, max = 50, message = "{project.organization_id.length_range}", groups = {Created.class, Updated.class})
+    private String projectCode;
+
     @Schema(description = "组织ID", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "{project.organization_id.not_blank}", groups = {Created.class})
     @Size(min = 1, max = 50, message = "{project.organization_id.length_range}", groups = {Created.class, Updated.class})
