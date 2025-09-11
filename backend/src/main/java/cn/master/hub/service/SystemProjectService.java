@@ -24,4 +24,10 @@ public interface SystemProjectService extends IService<SystemProject> {
     Page<ProjectDTO> buildUserInfo(Page<ProjectDTO> page);
 
     ProjectDTO update(UpdateProjectRequest request, String updateUser, String path, String module);
+
+    int delete(String id, String deleteUser);
+
+    void enable(String id, String updateUser);
+
+    void disable(String id, String updateUser);
 }

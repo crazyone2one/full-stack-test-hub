@@ -20,4 +20,10 @@ public interface OrganizationProjectService {
     ProjectDTO update(UpdateProjectRequest request, String updateUser);
 
     List<UserExtendDTO> getUserAdminList(String organizationId, String keyword);
+
+    int delete(String id, String deleteUser);
+
+    void enable(String id, String updateUser);
+
+    void disable(String id, String updateUser);
 }

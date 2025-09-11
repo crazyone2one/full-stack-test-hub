@@ -30,7 +30,6 @@ const options = ref<Array<SelectOption>>([])
 const loadList = async () => {
   const {keyword, ...rest} = props.loadOptionParams;
   const list = (await initOptionsFunc(props.type, {keyword, ...rest})) || [];
-  console.log(list)
   if (list.length > 0) {
     options.value = []
     list.forEach(u => options.value.push(

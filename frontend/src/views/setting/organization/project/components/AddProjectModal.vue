@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type {FormInst, FormRules, SelectOption} from "naive-ui";
 import type {CreateOrUpdateOrgProjectParams} from "/@/api/types/project.ts";
-import {computed, ref} from "vue";
+import {computed, ref, watchEffect} from "vue";
 import {useForm} from "alova/client";
 import {projectManagementApis} from "/@/api/modules/project-management.ts";
 import {useAppStore} from "/@/store";
@@ -79,6 +79,24 @@ const handleSubmit = () => {
     }
   })
 }
+watchEffect(() => {
+  if (props.currentProject?.id) {
+    if (props.currentProject) {
+      console.log(props.currentProject)
+      form.value.id = props.currentProject.id;
+      form.value.name = props.currentProject.name;
+      form.value.projectCode = props.currentProject.projectCode;
+      form.value.description = props.currentProject.description;
+      form.value.enable = props.currentProject.enable;
+      form.value.userIds = props.currentProject.userIds;
+      form.value.organizationId = props.currentProject.organizationId;
+      form.value.moduleIds = props.currentProject.moduleIds;
+      form.value.resourcePoolIds = props.currentProject.resourcePoolIds;
+      form.value.allResourcePool = props.currentProject.allResourcePool;
+      console.log(form.value)
+    }
+  }
+})
 </script>
 
 <template>

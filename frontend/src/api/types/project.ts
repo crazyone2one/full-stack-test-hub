@@ -1,3 +1,6 @@
+import type {IUserItem} from "/@/api/types/user.ts";
+import type {IResourcePoolItem} from "/@/api/types/resource-pool.ts";
+
 export interface ProjectListItem {
     id: string;
     num: number;
@@ -5,6 +8,7 @@ export interface ProjectListItem {
     name: string;
     description: string;
 }
+
 export interface ProjectTableItem {
     id: string;
     num: number;
@@ -13,7 +17,14 @@ export interface ProjectTableItem {
     name: string;
     description: string;
     memberCount: number;
+    enable: boolean;
+    adminList: IUserItem[];
+    moduleIds: string[];
+    resourcePoolList: IResourcePoolItem[];
+    allResourcePool: boolean;
+    projectCode: string;
 }
+
 export interface CreateOrUpdateOrgProjectParams {
     id?: string;
     name: string;

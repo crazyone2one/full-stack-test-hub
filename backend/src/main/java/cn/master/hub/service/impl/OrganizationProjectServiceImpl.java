@@ -73,6 +73,21 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
                 .listAs(UserExtendDTO.class);
     }
 
+    @Override
+    public int delete(String id, String deleteUser) {
+        return projectService.delete(id, deleteUser);
+    }
+
+    @Override
+    public void enable(String id, String updateUser) {
+        projectService.enable(id, updateUser);
+    }
+
+    @Override
+    public void disable(String id, String updateUser) {
+        projectService.disable(id, updateUser);
+    }
+
     private void checkOrgIsExist(String organizationId) {
         boolean exists = QueryChain.of(SystemOrganization.class).where(SYSTEM_ORGANIZATION.ID.eq(organizationId)).exists();
         if (!exists) {

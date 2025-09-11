@@ -1,8 +1,12 @@
 package cn.master.hub.service.log;
 
+import cn.master.hub.constants.HttpMethodConstants;
 import cn.master.hub.constants.OperationLogConstants;
 import cn.master.hub.dto.request.AddProjectRequest;
+import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.entity.OperationLog;
+import cn.master.hub.entity.SystemProject;
+import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.mapper.SystemProjectMapper;
@@ -18,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(rollbackFor = Exception.class)
 public class OrganizationProjectLogService {
-    private final SystemProjectMapper systemProjectMapper;
+    private final SystemProjectMapper projectMapper;
 
     public OperationLog addLog(AddProjectRequest project) {
         OperationLog dto = OperationLog.builder()
@@ -32,5 +36,60 @@ public class OrganizationProjectLogService {
 
         dto.setOriginalValue(JacksonUtils.toJSONBytes(project));
         return dto;
+    }
+
+    public LogDTO updateLog(UpdateProjectRequest request) {
+        SystemProject project = projectMapper.selectOneById(request.getId());
+        if (project != null) {
+            LogDTO dto = new LogDTO(
+                    OperationLogConstants.ORGANIZATION,
+                    project.getOrganizationId(),
+                    project.getId(),
+                    null,
+                    OperationLogType.UPDATE.name(),
+                    OperationLogModule.SETTING_ORGANIZATION_PROJECT,
+                    request.getName());
+
+            dto.setOriginalValue(JacksonUtils.toJSONBytes(project));
+            return dto;
+        }
+        return null;
+    }
+
+    public LogDTO updateLog(String id) {
+        SystemProject project = projectMapper.selectOneById(id);
+        if (project != null) {
+            LogDTO dto = new LogDTO(
+                    OperationLogConstants.ORGANIZATION,
+                    project.getOrganizationId(),
+                    project.getId(),
+                    null,
+                    OperationLogType.UPDATE.name(),
+                    OperationLogModule.SETTING_ORGANIZATION_PROJECT,
+                    project.getName());
+            dto.setMethod(HttpMethodConstants.GET.name());
+
+            dto.setOriginalValue(JacksonUtils.toJSONBytes(project));
+            return dto;
+        }
+        return null;
+    }
+
+    public LogDTO deleteLog(String id) {
+        SystemProject project = projectMapper.selectOneById(id);
+        if (project != null) {
+            LogDTO dto = new LogDTO(
+                    OperationLogConstants.ORGANIZATION,
+                    project.getOrganizationId(),
+                    id,
+                    null,
+                    OperationLogType.DELETE.name(),
+                    OperationLogModule.SETTING_ORGANIZATION_PROJECT,
+                    project.getName());
+
+            dto.setOriginalValue(JacksonUtils.toJSONBytes(project));
+            return dto;
+        }
+        return null;
     }
 }

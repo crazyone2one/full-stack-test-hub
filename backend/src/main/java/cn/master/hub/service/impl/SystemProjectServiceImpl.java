@@ -25,6 +25,7 @@ import cn.master.hub.service.SystemProjectService;
 import cn.master.hub.util.JacksonUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -205,6 +206,28 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
         return projectDTO;
     }
 
+    @Override
+    public int delete(String id, String deleteUser) {
+        checkProjectNotExist(id);
+        return mapper.deleteById(id);
+    }
+
+    @Override
+    public void enable(String id, String updateUser) {
+        checkProjectNotExist(id);
+        UpdateChain.of(SystemProject.class).set(SYSTEM_PROJECT.ENABLE, true)
+                .set(SYSTEM_PROJECT.UPDATE_USER, updateUser)
+                .where(SYSTEM_PROJECT.ID.eq(id)).update();
+    }
+
+    @Override
+    public void disable(String id, String updateUser) {
+        checkProjectNotExist(id);
+        UpdateChain.of(SystemProject.class).set(SYSTEM_PROJECT.ENABLE, false)
+                .set(SYSTEM_PROJECT.UPDATE_USER, updateUser)
+                .where(SYSTEM_PROJECT.ID.eq(id)).update();
+    }
+
     private List<ProjectResourcePoolDTO> getProjectResourcePoolDTOList(List<String> projectIds) {
         return queryChain()
                 .select(PROJECT_TEST_RESOURCE_POOL.PROJECT_ID, TEST_RESOURCE_POOL.ALL_COLUMNS)
@@ -286,7 +309,10 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
 
     private void checkOrgRoleExit(List<String> userIds, String orgId, String createUser, Map<String, String> nameMap, String path, String module) {
         List<LogDTO> logs = new ArrayList<>();
-        List<UserRoleRelation> userRoleRelations = QueryChain.of(UserRoleRelation.class).where(UserRoleRelation::getUserId).in(userIds).list();
+        List<UserRoleRelation> userRoleRelations = QueryChain.of(UserRoleRelation.class)
+                .where(UserRoleRelation::getUserId).in(userIds)
+                .and(UserRoleRelation::getSourceId).eq(orgId)
+                .list();
         //把用户id放到一个新的list
         List<String> orgUserIds = userRoleRelations.stream().map(UserRoleRelation::getUserId).toList();
         if (!userIds.isEmpty()) {

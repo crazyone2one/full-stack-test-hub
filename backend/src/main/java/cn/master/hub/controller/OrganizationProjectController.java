@@ -14,6 +14,7 @@ import cn.master.hub.service.log.OrganizationProjectLogService;
 import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,7 @@ public class OrganizationProjectController {
     public ProjectDTO updateProject(@RequestBody @Validated({Updated.class}) UpdateProjectRequest request) {
         return organizationProjectService.update(request, SessionUtils.getCurrentUserName());
     }
+
     @GetMapping("/user-admin-list/{organizationId}")
     @Operation(summary = "系统设置-组织-项目-获取项目管理员下拉选项")
     public List<UserExtendDTO> getUserAdminList(@PathVariable String organizationId, @Schema(description = "查询关键字，根据邮箱和用户名查询")
@@ -58,4 +60,27 @@ public class OrganizationProjectController {
         return organizationProjectService.getUserAdminList(organizationId, keyword);
     }
 
+    @GetMapping("/delete/{id}")
+    @Operation(summary = "系统设置-组织-项目-删除")
+    @Parameter(name = "id", description = "项目", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    @Log(type = OperationLogType.DELETE, expression = "#msClass.deleteLog(#id)", msClass = OrganizationProjectLogService.class)
+    public int deleteProject(@PathVariable String id) {
+        return organizationProjectService.delete(id, SessionUtils.getCurrentUserName());
+    }
+
+    @GetMapping("/enable/{id}")
+    @Operation(summary = "系统设置-组织-项目-启用")
+    @Parameter(name = "id", description = "项目ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    @Log(type = OperationLogType.UPDATE, expression = "#msClass.updateLog(#id)", msClass = OrganizationProjectLogService.class)
+    public void enable(@PathVariable String id) {
+        organizationProjectService.enable(id, SessionUtils.getCurrentUserName());
+    }
+
+    @GetMapping("/disable/{id}")
+    @Operation(summary = "系统设置-组织-项目-禁用")
+    @Parameter(name = "id", description = "项目ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    @Log(type = OperationLogType.UPDATE, expression = "#msClass.updateLog(#id)", msClass = OrganizationProjectLogService.class)
+    public void disable(@PathVariable String id) {
+        organizationProjectService.disable(id, SessionUtils.getCurrentUserName());
+    }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Created by 11's papa on 2025/9/10
  */
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @Data
 public class UserExtendDTO extends SystemUser implements Serializable {
     @Serial

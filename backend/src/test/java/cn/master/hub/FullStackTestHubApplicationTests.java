@@ -1,5 +1,6 @@
 package cn.master.hub;
 
+import cn.master.hub.dto.OptionDTO;
 import cn.master.hub.mapper.SystemUserMapper;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 class FullStackTestHubApplicationTests {
@@ -20,21 +23,11 @@ class FullStackTestHubApplicationTests {
 
     @Test
     void contextLoads() {
-        String param = "07:00~8:00(M),14:00~17:50(N),23:10~01:40(E)";
-        String[] timeStrList = param.split(",");
-        String shiftTime;
-        String[] shiftTimeStrList;
-        String morningShiftEndTimeStr = "";
-        for (String time : timeStrList) {
-            shiftTime = time.substring(0, time.indexOf("("));
-            // 班次时间段，['09:20','11:50']
-            shiftTimeStrList = shiftTime.split("~");
-            if (time.contains("M")) {
-                morningShiftEndTimeStr = shiftTimeStrList[1];
-            }
-        }
-        String shiftFlag = parseShiftTime(timeStrList);
-        System.out.println(morningShiftEndTimeStr);
+        List<OptionDTO> options = new ArrayList<>();
+        options.add(new OptionDTO("1", "1"));
+        options.add(new OptionDTO("1", "2"));
+        Map<String, List<OptionDTO>> collect = options.stream().collect(Collectors.groupingBy(OptionDTO::getLabel));
+        System.out.println(collect);
     }
 
     private String parseShiftTime(String[] timeStrList) {
