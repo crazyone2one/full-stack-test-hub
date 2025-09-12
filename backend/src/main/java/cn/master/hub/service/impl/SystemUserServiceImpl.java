@@ -103,6 +103,7 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
         user.setUpdateUser(currentUserName);
         user.setEnable(true);
         mapper.insert(user);
+        userRoleRelationService.updateUserSystemGlobalRole(user, user.getUpdateUser(), userCreateDTO.getUserRoleIdList());
         return "";
     }
 
