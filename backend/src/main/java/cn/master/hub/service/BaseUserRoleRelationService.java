@@ -1,9 +1,14 @@
 package cn.master.hub.service;
 
+import cn.master.hub.dto.response.UserTableResponse;
+import cn.master.hub.entity.SystemUser;
 import cn.master.hub.entity.UserRoleRelation;
 import com.mybatisflex.core.service.IService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户组关系 服务层。
@@ -18,4 +23,8 @@ public interface BaseUserRoleRelationService extends IService<UserRoleRelation> 
     List<String> getUserIdByRoleId(String roleId);
 
     List<UserRoleRelation> getUserIdAndSourceIdByUserIds(List<String> userIds);
+
+    void updateUserSystemGlobalRole(@Valid SystemUser user, @Valid @NotEmpty String operator, @Valid @NotEmpty List<String> roleList);
+
+    Map<String, UserTableResponse> selectGlobalUserRoleAndOrganization(List<String> userIdList);
 }

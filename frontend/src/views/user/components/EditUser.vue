@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import BaseModal from "/@/components/BaseModal.vue";
-import {ref, watch} from "vue";
+import {onBeforeMount, ref, watch} from "vue";
 import {type FormInst, type FormItemRule, type FormRules, NAlert, NButton, NForm, NFormItem, NInput} from "naive-ui";
 import {useForm} from "alova/client";
 import {userApis} from "/@/api/modules/user.ts";
 import {validateEmail, validatePhone} from "/@/utils/validate.ts";
 import type {UserState} from "/@/store/modules/user/types.ts";
+import type {ISystemRole} from "/@/api/types/user.ts";
 
 defineProps<{
   userFormMode: 'create' | 'edit'
@@ -14,6 +15,7 @@ const showModal = defineModel<boolean>('showModal', {type: Boolean, default: fal
 const userForm = defineModel<UserState>('userForm', {default: {}})
 const formRef = ref<FormInst | null>(null);
 const emit = defineEmits(['cancel', 'submit'])
+const userGroupOptions = ref<ISystemRole[]>([]);
 const rules: FormRules = {
   name: [{required: true, message: '姓名不能为空', trigger: ['blur', 'change']},
     {
@@ -41,27 +43,40 @@ const rules: FormRules = {
       return true
     },
     trigger: ['blur', 'change'],
-  }
+  },
+  userGroup: {required: true, message: '请至少选择一个用户组', trigger: ['blur', 'change'], type: 'array'}
 }
-const {form, send, loading,reset} = useForm(formData => {
+const {form, send, loading, reset} = useForm(formData => {
   // 数据预处理
   const processedData = {
-    ...formData,
+    id: formData.id,
+    name: formData.name,
+    email: formData.email,
+    phone: formData.phone,
+    userRoleIdList: formData.userGroup,
   };
+  console.log(processedData)
   // 根据是否有 ID 判断是创建还是更新
-  return processedData.id
-      ? userApis.updateUser(processedData)
-      : userApis.createUser(processedData);
+  return processedData.id? userApis.updateUser(processedData) : userApis.createUser(processedData);
 }, {
   initialForm: {
     id: undefined,
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    userGroup: []
   },
   resetAfterSubmiting: true,
   immediate: false
 })
+const init = () => {
+  userApis.getSystemRoles().then(res => {
+    userGroupOptions.value = res
+    if (userGroupOptions.value.length) {
+      form.value.userGroup = userGroupOptions.value.filter(item => item.selected === true).map(item => item.id)
+    }
+  })
+}
 const handleValidateClick = (e: MouseEvent) => {
   e?.preventDefault()
   formRef.value?.validate(errors => {
@@ -85,6 +100,9 @@ watch(() => userForm.value, (newValue) => {
     form.value = newValue
   }
 }, {deep: true})
+onBeforeMount(() => {
+  init()
+})
 </script>
 
 <template>
@@ -107,14 +125,18 @@ watch(() => userForm.value, (newValue) => {
       <n-form-item path="phone" label="手机号">
         <n-input v-model:value="form.phone" placeholder="请输入手机号"></n-input>
       </n-form-item>
+      <n-form-item path="userGroup" label="用户组">
+        <n-select v-model:value="form.userGroup" :options="userGroupOptions" placeholder="请选择用户组" multiple
+                  value-field="id" label-field="name"/>
+      </n-form-item>
     </n-form>
     <template #footer>
       <div class="flex flex-row gap-[12px]">
         <n-button type="tertiary" size="small" :disabled="loading" @click="handleBeforeClose">取消</n-button>
-<!--        <n-button v-if="userFormMode === 'create'" type="tertiary" size="small" :disabled="loading"-->
-<!--                  @click="saveAndContinue">-->
-<!--          保存并继续创建-->
-<!--        </n-button>-->
+        <!--        <n-button v-if="userFormMode === 'create'" type="tertiary" size="small" :disabled="loading"-->
+        <!--                  @click="saveAndContinue">-->
+        <!--          保存并继续创建-->
+        <!--        </n-button>-->
         <n-button type="primary" size="small" @click="handleValidateClick">
           {{ userFormMode === 'create' ? '创建' : '保存' }}
         </n-button>

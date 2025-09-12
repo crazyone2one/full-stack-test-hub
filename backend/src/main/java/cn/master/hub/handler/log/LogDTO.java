@@ -15,4 +15,6 @@ public class LogDTO extends OperationLog {
         this.setModule(module);
         this.setContent(content);
     }
+    public LogDTO() {
+    }
 }

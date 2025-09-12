@@ -1,16 +1,23 @@
 package cn.master.hub.service.impl;
 
+import cn.master.hub.constants.UserRoleType;
 import cn.master.hub.dto.UserCreateInfo;
 import cn.master.hub.dto.request.BasePageRequest;
 import cn.master.hub.dto.request.UserBatchCreateRequest;
+import cn.master.hub.dto.request.UserEditRequest;
 import cn.master.hub.dto.response.UserBatchCreateResponse;
+import cn.master.hub.dto.response.UserTableResponse;
+import cn.master.hub.dto.system.UserSelectOption;
 import cn.master.hub.entity.SystemProject;
 import cn.master.hub.entity.SystemUser;
+import cn.master.hub.entity.UserRole;
 import cn.master.hub.entity.UserRoleRelation;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.result.ResultCode;
 import cn.master.hub.mapper.SystemUserMapper;
+import cn.master.hub.service.BaseUserRoleRelationService;
+import cn.master.hub.service.GlobalUserRoleService;
 import cn.master.hub.service.OperationLogService;
 import cn.master.hub.service.SystemUserService;
 import cn.master.hub.service.log.UserLogService;
@@ -21,14 +28,17 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.hub.constants.InternalUserRole.MEMBER;
 import static cn.master.hub.entity.table.SystemProjectTableDef.SYSTEM_PROJECT;
 import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
+import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
 
 /**
  * 用户 服务层实现。
@@ -42,14 +52,29 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
     private final OperationLogService operationLogService;
     private final UserLogService userLogService;
     private final PasswordEncoder passwordEncoder;
+    private final GlobalUserRoleService globalUserRoleService;
+    private final BaseUserRoleRelationService userRoleRelationService;
 
     @Override
-    public Page<SystemUser> getUserPage(BasePageRequest request) {
-        return queryChain()
+    public Page<UserTableResponse> getUserPage(BasePageRequest request) {
+        Page<UserTableResponse> page = queryChain()
                 .where(SYSTEM_USER.NAME.like(request.getKeyword())
                         .or(SYSTEM_USER.EMAIL.like(request.getKeyword()))
                         .or(SYSTEM_USER.PHONE.like(request.getKeyword())))
-                .page(new Page<>(request.getPage(), request.getPageSize()));
+                .pageAs(new Page<>(request.getPage(), request.getPageSize()), UserTableResponse.class);
+        List<UserTableResponse> userList = page.getRecords();
+        if (!userList.isEmpty()) {
+            List<String> userIdList = userList.stream().map(SystemUser::getId).collect(Collectors.toList());
+            Map<String, UserTableResponse> roleAndOrganizationMap = userRoleRelationService.selectGlobalUserRoleAndOrganization(userIdList);
+            for (UserTableResponse user : userList) {
+                UserTableResponse roleOrgModel = roleAndOrganizationMap.get(user.getId());
+                if (roleOrgModel != null) {
+                    user.setUserRoleList(roleOrgModel.getUserRoleList());
+                    user.setOrganizationList(roleOrgModel.getOrganizationList());
+                }
+            }
+        }
+        return page;
     }
 
     @Override
@@ -125,6 +150,40 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
         return QueryChain.of(UserRoleRelation.class)
                 .where(UserRoleRelation::getUserId).eq(id).and(UserRoleRelation::getRoleId).eq("admin")
                 .exists();
+    }
+
+    @Override
+    public List<UserSelectOption> getGlobalSystemRoleList() {
+        List<UserSelectOption> returnList = new ArrayList<>();
+        QueryChain.of(UserRole.class).where(USER_ROLE.SCOPE_ID.eq("global").and(USER_ROLE.TYPE.eq(UserRoleType.SYSTEM.name()))).list()
+                .forEach(userRole -> {
+                    UserSelectOption userRoleOption = new UserSelectOption();
+                    userRoleOption.setId(userRole.getId());
+                    userRoleOption.setName(userRole.getName());
+                    userRoleOption.setSelected(Strings.CS.equals(userRole.getId(), MEMBER.getValue()));
+                    userRoleOption.setCloseable(!Strings.CS.equals(userRole.getId(), MEMBER.getValue()));
+                    returnList.add(userRoleOption);
+                });
+        return returnList;
+    }
+
+    @Override
+    public UserEditRequest updateUser(UserEditRequest request, String operator) {
+        globalUserRoleService.checkRoleIsGlobalAndHaveMember(request.getUserRoleIdList(), true);
+        checkUserEmail(request.getId(), request.getEmail());
+        SystemUser user = new SystemUser();
+        BeanUtils.copyProperties(request, user);
+        user.setUpdateUser(operator);
+        mapper.update(user);
+        userRoleRelationService.updateUserSystemGlobalRole(user, user.getUpdateUser(), request.getUserRoleIdList());
+        return request;
+    }
+
+    public void checkUserEmail(String id, String email) {
+        boolean exists = queryChain().where(SYSTEM_USER.EMAIL.eq(email).and(SYSTEM_USER.ID.ne(id))).exists();
+        if (exists) {
+            throw new CustomException(Translator.get("user_email_already_exists"));
+        }
     }
 
     private List<UserCreateInfo> saveUserAndRole(UserBatchCreateRequest userCreateDTO, String source, String operator, String requestPath) {

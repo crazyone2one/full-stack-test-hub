@@ -25,6 +25,7 @@ const {page, pageSize, data, send: loadList} = usePagination((page, pageSize) =>
       immediate: false,
       data: resp => resp.records,
       total: resp => resp.totalRow,
+      watchingStates: [keyword]
     }
 )
 const columns: DataTableColumns<UserState> = [
@@ -81,6 +82,7 @@ const userForm = ref<UserState>()
 const handleEditClick = (row: UserState) => {
   showAddModel.value = true
   userForm.value = row
+  userForm.value.userGroup = row.userRoleList.map(item => item.id);
   userFormMode.value = 'edit'
 }
 onMounted(() => {

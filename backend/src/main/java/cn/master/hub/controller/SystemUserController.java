@@ -3,8 +3,12 @@ package cn.master.hub.controller;
 import cn.master.hub.constants.UserSource;
 import cn.master.hub.dto.UserCreateInfo;
 import cn.master.hub.dto.request.BasePageRequest;
+import cn.master.hub.dto.request.UserEditRequest;
+import cn.master.hub.dto.response.UserTableResponse;
+import cn.master.hub.dto.system.UserSelectOption;
 import cn.master.hub.entity.SystemUser;
 import cn.master.hub.handler.validation.Created;
+import cn.master.hub.handler.validation.Updated;
 import cn.master.hub.service.SystemUserService;
 import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
@@ -58,13 +62,13 @@ public class SystemUserController {
     /**
      * 根据主键更新用户。
      *
-     * @param systemUser 用户
+     * @param request 用户
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("update")
-    @Operation(description = "根据主键更新用户")
-    public boolean update(@RequestBody @Parameter(description = "用户主键") SystemUser systemUser) {
-        return systemUserService.updateById(systemUser);
+    @Operation(description = "系统设置-系统-用户-修改用户")
+    public UserEditRequest update(@Validated({Updated.class}) @RequestBody UserEditRequest request) {
+        return systemUserService.updateUser(request, SessionUtils.getCurrentUserName());
     }
 
     /**
@@ -98,8 +102,13 @@ public class SystemUserController {
      */
     @PostMapping("page")
     @Operation(description = "分页查询用户")
-    public Page<SystemUser> page(@Validated @RequestBody BasePageRequest request) {
+    public Page<UserTableResponse> page(@Validated @RequestBody BasePageRequest request) {
         return systemUserService.getUserPage(request);
     }
 
+    @GetMapping("/get/global/system/role")
+    @Operation(summary = "系统设置-系统-用户-查找系统级用户组")
+    public List<UserSelectOption> getGlobalSystemRole() {
+        return systemUserService.getGlobalSystemRoleList();
+    }
 }
