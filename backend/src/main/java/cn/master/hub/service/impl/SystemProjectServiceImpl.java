@@ -3,7 +3,10 @@ package cn.master.hub.service.impl;
 import cn.master.hub.constants.HttpMethodConstants;
 import cn.master.hub.constants.InternalUserRole;
 import cn.master.hub.constants.OperationLogConstants;
+import cn.master.hub.dto.UserDTO;
 import cn.master.hub.dto.request.AddProjectRequest;
+import cn.master.hub.dto.request.ProjectRequest;
+import cn.master.hub.dto.request.ProjectSwitchRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.ProjectAddMemberBatchRequest;
 import cn.master.hub.dto.system.ProjectResourcePoolDTO;
@@ -16,10 +19,12 @@ import cn.master.hub.handler.invoker.ProjectServiceInvoker;
 import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.handler.log.OperationLogType;
+import cn.master.hub.handler.security.UserPrincipal;
 import cn.master.hub.mapper.ProjectTestResourcePoolMapper;
 import cn.master.hub.mapper.SystemProjectMapper;
 import cn.master.hub.mapper.SystemUserMapper;
 import cn.master.hub.mapper.UserRoleRelationMapper;
+import cn.master.hub.service.AuthenticationUserService;
 import cn.master.hub.service.OperationLogService;
 import cn.master.hub.service.SystemProjectService;
 import cn.master.hub.util.JacksonUtils;
@@ -32,6 +37,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +68,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
     private final UserRoleRelationMapper userRoleRelationMapper;
     private final OperationLogService operationLogService;
     private final SystemUserMapper systemUserMapper;
+    private final AuthenticationUserService authenticationUserService;
 
     @Override
     public List<SystemProject> getUserProject(String organizationId, String currentUserName) {
@@ -112,7 +121,12 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
 
     @Override
     public Page<ProjectDTO> buildUserInfo(Page<ProjectDTO> page) {
-        List<ProjectDTO> projectList = page.getRecords();
+        buildUserInfo(page.getRecords());
+        return page;
+    }
+
+    @Override
+    public List<ProjectDTO> buildUserInfo(List<ProjectDTO> projectList) {
         List<String> projectIds = projectList.stream().map(ProjectDTO::getId).toList();
         List<UserExtendDTO> users = getProjectAdminList(projectIds);
         List<ProjectDTO> projectDTOList = getProjectExtendDTOList(projectIds);
@@ -139,7 +153,7 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
                 projectDTO.setResourcePoolList(new ArrayList<>());
             }
         });
-        return page;
+        return projectList;
     }
 
     @Override
@@ -226,6 +240,67 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
         UpdateChain.of(SystemProject.class).set(SYSTEM_PROJECT.ENABLE, false)
                 .set(SYSTEM_PROJECT.UPDATE_USER, updateUser)
                 .where(SYSTEM_PROJECT.ID.eq(id)).update();
+    }
+
+    @Override
+    public ProjectDTO getProjectById(String id) {
+        List<SystemProject> projectList = queryChain().where(SYSTEM_PROJECT.ID.eq(id).and(SYSTEM_PROJECT.ENABLE.eq(true))).list();
+        ProjectDTO projectDTO = new ProjectDTO();
+        if (CollectionUtils.isNotEmpty(projectList)) {
+            BeanUtils.copyProperties(projectList.getFirst(), projectDTO);
+            projectDTO.setOrganizationName(QueryChain.of(SystemOrganization.class)
+                    .where(SystemOrganization::getId).eq(projectDTO.getOrganizationId()).one().getName());
+            List<ProjectDTO> projectDTOS = buildUserInfo(List.of(projectDTO));
+            projectDTO = projectDTOS.getFirst();
+        } else {
+            return null;
+        }
+        return projectDTO;
+    }
+
+    @Override
+    public ProjectDTO update(ProjectRequest request, String updateUser) {
+        ProjectDTO projectDTO = new ProjectDTO();
+        SystemProject project = new SystemProject();
+        project.setId(request.getId());
+        project.setName(request.getName());
+        project.setDescription(request.getDescription());
+        project.setOrganizationId(request.getOrganizationId());
+        project.setEnable(request.getEnable());
+        project.setUpdateUser(updateUser);
+        checkProjectExistByName(project);
+        checkProjectNotExist(project.getId());
+        projectDTO.setOrganizationName(QueryChain.of(SystemOrganization.class)
+                .where(SystemOrganization::getId).eq(projectDTO.getOrganizationId()).one().getName());
+        BeanUtils.copyProperties(project, projectDTO);
+        mapper.update(project);
+        return projectDTO;
+    }
+
+    @Override
+    public UserDTO switchProject(ProjectSwitchRequest request, String currentUserId) {
+        if (!Strings.CS.equals(currentUserId, request.getUserId())) {
+            throw new CustomException(Translator.get("not_authorized"));
+        }
+        if (mapper.selectOneById(request.getProjectId()) == null) {
+            throw new CustomException(Translator.get("project_not_exist"));
+        }
+        UpdateChain.of(SystemUser.class).set(SystemUser::getLastProjectId, request.getProjectId())
+                .where(SystemUser::getId).eq(request.getUserId()).update();
+        UserDTO userDTO = authenticationUserService.getUserDTO(request.getUserId());
+        // 获取当前认证信息
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // 创建新的 UserPrincipal 对象
+        UserPrincipal updatedPrincipal = new UserPrincipal(userDTO);
+        // 创建新的 Authentication 对象
+        Authentication newAuthentication = new UsernamePasswordAuthenticationToken(
+                updatedPrincipal,
+                authentication.getCredentials(),
+                updatedPrincipal.getAuthorities()
+        );
+        // 更新安全上下文
+        SecurityContextHolder.getContext().setAuthentication(newAuthentication);
+        return userDTO;
     }
 
     private List<ProjectResourcePoolDTO> getProjectResourcePoolDTOList(List<String> projectIds) {

@@ -1,5 +1,10 @@
 import {get, post} from "/@/api";
-import type {CreateOrUpdateOrgProjectParams, ProjectListItem, ProjectTableItem} from "/@/api/types/project.ts";
+import type {
+    CreateOrUpdateOrgProjectParams,
+    IProjectBasicInfo,
+    ProjectListItem,
+    ProjectTableItem
+} from "/@/api/types/project.ts";
 import type {IPageResponse, ITableQueryParams, IUserSelectorOption} from "/@/api/types/commons.ts";
 import {type SelectOption} from "naive-ui";
 
@@ -23,5 +28,7 @@ export const projectManagementApis = {
         cacheFor: 0
     }),
     createOrUpdateProjectByOrg: (param: CreateOrUpdateOrgProjectParams) =>
-        post(param.id ? '/organization/project/update' : '/organization/project/add', param)
+        post(param.id ? '/organization/project/update' : '/organization/project/add', param),
+    // 获取项目详情
+    getProjectInfo: (id: string) => get<IProjectBasicInfo>(`${'/system/project/getInfo/'}${id}`, {}, {cacheFor: 0}),
 }

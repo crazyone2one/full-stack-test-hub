@@ -123,4 +123,11 @@ export const getFirstRouterNameByCurrentRoute = (parentName: string) => {
         return hasAuthChildrenRouter ? hasAuthChildrenRouter.name : parentName;
     }
     return parentName;
+};
+
+export const hasAllPermission = (permissions: string[], typeList = ['PROJECT', 'ORGANIZATION', 'SYSTEM']) => {
+    if (!permissions || permissions.length === 0) {
+        return true;
+    }
+    return permissions.every((permission) => hasPermission(permission, typeList));
 }

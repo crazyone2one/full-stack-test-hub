@@ -1,6 +1,9 @@
 package cn.master.hub.service;
 
+import cn.master.hub.dto.UserDTO;
 import cn.master.hub.dto.request.AddProjectRequest;
+import cn.master.hub.dto.request.ProjectRequest;
+import cn.master.hub.dto.request.ProjectSwitchRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.entity.SystemProject;
@@ -23,6 +26,8 @@ public interface SystemProjectService extends IService<SystemProject> {
 
     Page<ProjectDTO> buildUserInfo(Page<ProjectDTO> page);
 
+    List<ProjectDTO> buildUserInfo(List<ProjectDTO> projectList);
+
     ProjectDTO update(UpdateProjectRequest request, String updateUser, String path, String module);
 
     int delete(String id, String deleteUser);
@@ -30,4 +35,10 @@ public interface SystemProjectService extends IService<SystemProject> {
     void enable(String id, String updateUser);
 
     void disable(String id, String updateUser);
+
+    ProjectDTO getProjectById(String id);
+
+    ProjectDTO update(ProjectRequest request, String currentUserName);
+
+    UserDTO switchProject(ProjectSwitchRequest request, String currentUserId);
 }

@@ -2,6 +2,7 @@ package cn.master.hub.service;
 
 import cn.master.hub.dto.PermissionDefinitionItem;
 import cn.master.hub.dto.request.PermissionSettingUpdateRequest;
+import cn.master.hub.dto.system.UserExtendDTO;
 import cn.master.hub.entity.UserRole;
 import com.mybatisflex.core.service.IService;
 
@@ -33,5 +34,12 @@ public interface BaseUserRoleService extends IService<UserRole> {
     void checkAdminUserRole(UserRole userRole);
 
     void checkGlobalUserRole(UserRole userRole);
+
+    void checkNewRoleExist(UserRole userRole);
+
     UserRole get(String id);
+
+    List<UserExtendDTO> getMember(String sourceId, String roleId, String keyword);
+
+    void checkMemberParam(String userId, String roleId);
 }

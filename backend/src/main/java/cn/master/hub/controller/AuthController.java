@@ -8,6 +8,7 @@ import cn.master.hub.handler.result.ResultCode;
 import cn.master.hub.handler.result.ResultHolder;
 import cn.master.hub.handler.security.UserPrincipal;
 import cn.master.hub.service.AuthenticationService;
+import cn.master.hub.service.AuthenticationUserService;
 import cn.master.hub.util.SessionUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthenticationService authenticationService;
+    private final AuthenticationUserService authenticationUserService;
 
     @Value("${spring.messages.default-locale}")
     private String defaultLocale;
@@ -50,7 +52,7 @@ public class AuthController {
     public ResultHolder isLogin(HttpServletResponse response) {
         UserPrincipal currentUser = SessionUtils.getCurrentUser();
         if (currentUser != null) {
-            UserDTO userDTO = authenticationService.getUserDTO(currentUser.user().getId());
+            UserDTO userDTO = authenticationUserService.getUserDTO(currentUser.user().getId());
             if (StringUtils.isBlank(userDTO.getLanguage())) {
                 userDTO.setLanguage(defaultLocale.replace("_", "-"));
             }

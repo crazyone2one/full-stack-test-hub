@@ -7,6 +7,8 @@ import cn.master.hub.constants.UserRoleType;
 import cn.master.hub.dto.Permission;
 import cn.master.hub.dto.PermissionDefinitionItem;
 import cn.master.hub.dto.request.PermissionSettingUpdateRequest;
+import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.entity.SystemUser;
 import cn.master.hub.entity.UserRole;
 import cn.master.hub.entity.UserRolePermission;
 import cn.master.hub.entity.UserRoleRelation;
@@ -19,11 +21,13 @@ import cn.master.hub.service.BaseUserRoleRelationService;
 import cn.master.hub.service.BaseUserRoleService;
 import cn.master.hub.util.JacksonUtils;
 import cn.master.hub.util.ServiceUtils;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -31,6 +35,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
 import static cn.master.hub.handler.result.CommonResultCode.ADMIN_USER_ROLE_PERMISSION;
 import static cn.master.hub.handler.result.CommonResultCode.INTERNAL_USER_ROLE_PERMISSION;
@@ -46,7 +51,7 @@ import static cn.master.hub.handler.result.ResultCode.NO_GLOBAL_USER_ROLE_PERMIS
 @RequiredArgsConstructor
 public class BaseUserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> implements BaseUserRoleService {
     private final BaseUserRolePermissionService baseUserRolePermissionService;
-    private final BaseUserRoleRelationService baseUserRoleRelationService;
+    protected final BaseUserRoleRelationService baseUserRoleRelationService;
     private final PermissionCache permissionCache;
 
     @Override
@@ -170,12 +175,76 @@ public class BaseUserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRol
     }
 
     @Override
+    public void checkNewRoleExist(UserRole userRole) {
+        boolean exists = queryChain().where(USER_ROLE.NAME.eq(userRole.getName())
+                        .and(USER_ROLE.SCOPE_ID.in(Arrays.asList(userRole.getScopeId(), UserRoleEnum.GLOBAL.toString())))
+                        .and(USER_ROLE.TYPE.eq(userRole.getType())))
+                .and(USER_ROLE.ID.ne(userRole.getId())).exists();
+        if (exists) {
+            throw new CustomException(Translator.get("user_role_exist"));
+        }
+    }
+
+    @Override
     public UserRole get(String id) {
         UserRole userRole = mapper.selectOneById(id);
         if (userRole == null) {
             throw new CustomException(Translator.get("user_role_not_exist"));
         }
         return userRole;
+    }
+
+    @Override
+    public List<UserExtendDTO> getMember(String sourceId, String roleId, String keyword) {
+        List<UserExtendDTO> userExtendDTOS = new ArrayList<>();
+        List<UserRoleRelation> userRoleRelations = QueryChain.of(UserRoleRelation.class).where(USER_ROLE_RELATION.SOURCE_ID.eq(sourceId)).list();
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userRoleRelations)) {
+            Map<String, List<String>> userRoleMap = userRoleRelations.stream().collect(Collectors.groupingBy(UserRoleRelation::getUserId,
+                    Collectors.mapping(UserRoleRelation::getRoleId, Collectors.toList())));
+            userRoleMap.forEach((k, v) -> {
+                UserExtendDTO userExtendDTO = new UserExtendDTO();
+                userExtendDTO.setId(k);
+                v.forEach(roleItem -> {
+                    if (Strings.CS.equals(roleItem, roleId)) {
+                        // 该用户已存在用户组关系, 设置为选中状态
+                        userExtendDTO.setCheckRoleFlag(true);
+                    }
+                });
+                userExtendDTOS.add(userExtendDTO);
+            });
+            // 设置用户信息, 用户不存在或者已删除, 则不展示
+            List<String> userIds = userExtendDTOS.stream().map(UserExtendDTO::getId).toList();
+            List<SystemUser> users = QueryChain.of(SystemUser.class).where(SystemUser::getId).in(userIds)
+                    .and(SystemUser::getName).like(keyword)
+                    .list();
+            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(users)) {
+                Map<String, SystemUser> userMap = users.stream().collect(Collectors.toMap(SystemUser::getId, user -> user));
+                userExtendDTOS.removeIf(userExtend -> {
+                    if (userMap.containsKey(userExtend.getId())) {
+                        BeanUtils.copyProperties(userMap.get(userExtend.getId()), userExtend);
+                        return false;
+                    }
+                    return true;
+                });
+            } else {
+                userExtendDTOS.clear();
+            }
+        }
+
+        userExtendDTOS.sort(Comparator.comparing(UserExtendDTO::getName));
+        return userExtendDTOS;
+    }
+
+    @Override
+    public void checkMemberParam(String userId, String roleId) {
+        SystemUser user = QueryChain.of(SystemUser.class).where(SystemUser::getId).eq(userId).one();
+        if (user == null) {
+            throw new CustomException(Translator.get("user_not_exist"));
+        }
+        UserRole userRole = mapper.selectOneById(roleId);
+        if (userRole == null) {
+            throw new CustomException(Translator.get("user_role_not_exist"));
+        }
     }
 
     private void checkOneLimitRole(String roleId, String defaultRoleId, String currentUserId, String orgId) {

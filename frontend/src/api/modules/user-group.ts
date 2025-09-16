@@ -5,6 +5,7 @@ import type {
     IUserGroupAuthSetting,
     IUserGroupItem
 } from "/@/api/types/user-group.ts";
+import type {IPageResponse, ITableQueryParams} from "/@/api/types/commons.ts";
 
 export const userGroupApis = {
     updateOrAddUserGroup: (data: ISystemUserGroupParams) => post<IUserGroupItem>(data.id ? "user/role/global/update" : "user/role/global/add", data),
@@ -25,4 +26,8 @@ export const userGroupApis = {
     getOrgUSetting: (id: string) => get<IUserGroupAuthSetting[]>(`/user/role/organization/permission/setting/${id}`),
     // 项目-获取用户组对应的权限
     getAuthByUserGroup: (id: string) => get<IUserGroupAuthSetting[]>(`/user/role/project/permission/setting/${id}`),
+    // 项目-删除用户组
+    deleteUserGroup: (id: string) => get(`/user/role/project/delete/${id}`),
+    // 项目-获取用户组列表
+    fetchUserGroupPage: (data: ITableQueryParams) => post<IPageResponse<IUserGroupItem>>("/user/role/project/page", data),
 }
