@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, h} from "vue";
+import {computed, h, onMounted, ref, useTemplateRef} from "vue";
 import {useAppStore} from "/@/store";
 import {type IUserGroupItem} from "/@/api/types/user-group.ts";
 import {type DataTableColumns, type DataTableRowKey, NButton, NDivider} from "naive-ui";
 import {usePagination} from "alova/client";
 import {userGroupApis} from "/@/api/modules/user-group.ts";
 import {hasAnyPermission} from "/@/utils/permissions.ts";
+import EditUserGroup from "/@/views/project-management/components/EditUserGroup.vue";
 
 
 const appStore = useAppStore();
 const keyword = ref('')
+const addUserGroupVisible = ref(false)
+const editUserGroupRef = useTemplateRef<InstanceType<typeof EditUserGroup>>('editUserGroup')
 const currentProjectId = computed(() => appStore.currentProjectId);
 const columns: DataTableColumns<IUserGroupItem> = [
   {
@@ -33,7 +36,7 @@ const columns: DataTableColumns<IUserGroupItem> = [
           if (hasAnyPermission(['PROJECT_GROUP:READ'])) {
             operations.push(h(NButton, {text: true, class: '!mr-0'}, {default: () => '查看权限'}))
             if (record.scopeId !== 'global') {
-              operations.push(h(NDivider, {}, {}));
+              operations.push(h(NDivider, {vertical:true}, {}));
             }
           }
           if (record.scopeId !== 'global') {
@@ -69,6 +72,15 @@ const {
       total: resp => resp.totalRow,
       watchingStates: [keyword]
     })
+const addUserGroup = () => {
+  addUserGroupVisible.value = true;
+};
+const handleAddUGCancel = (search: boolean) => {
+  addUserGroupVisible.value = false;
+  if (search) {
+    fetchData()
+  }
+};
 onMounted(() => {
   fetchData()
 })
@@ -76,7 +88,7 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-row items-center justify-between">
-    <n-button type="primary">添加用户组</n-button>
+    <n-button type="primary" @click="addUserGroup">添加用户组</n-button>
     <div>
       <n-input placeholder="通过名称搜索" v-model:value="keyword" clearable class="w-[240px]"/>
     </div>
@@ -87,6 +99,7 @@ onMounted(() => {
                 class="mt-[16px]"
                 @update:checked-row-keys="handleCheck"/>
   <base-pagination v-model:page="page" v-model:page-size="pageSize" :count="total||0"/>
+  <edit-user-group ref="editUserGroupRef" :show-modal="addUserGroupVisible" @cancel="handleAddUGCancel"/>
 </template>
 
 <style scoped>
