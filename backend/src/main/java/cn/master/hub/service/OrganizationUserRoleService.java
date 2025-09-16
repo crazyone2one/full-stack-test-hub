@@ -1,0 +1,18 @@
+package cn.master.hub.service;
+
+import cn.master.hub.dto.PermissionDefinitionItem;
+import cn.master.hub.dto.request.PermissionSettingUpdateRequest;
+import cn.master.hub.entity.UserRole;
+
+import java.util.List;
+
+/**
+ * @author Created by 11's papa on 2025/9/15
+ */
+public interface OrganizationUserRoleService extends BaseUserRoleService {
+    List<UserRole> list(String organizationId);
+
+    List<PermissionDefinitionItem> getPermissionSetting(String id);
+
+    void updatePermissionSetting(PermissionSettingUpdateRequest request);
+}

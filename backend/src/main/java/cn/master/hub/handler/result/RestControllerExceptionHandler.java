@@ -63,12 +63,10 @@ public class RestControllerExceptionHandler {
             if (errorCode.equals(ResultCode.NOT_FOUND)) {
                 message = getNotFoundMessage(message);
             }
-            return ResponseEntity.status(code % 1000)
-                    .body(ResultHolder.error(code, message, ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResultHolder.error(code, message, ex.getMessage()));
         } else {
             // 响应码返回 500，设置业务状态码
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResultHolder.error(code, Translator.get(message, message), ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResultHolder.error(code, Translator.get(message, message), ex.getMessage()));
         }
     }
 

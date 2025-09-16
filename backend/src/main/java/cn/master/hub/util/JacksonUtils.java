@@ -18,8 +18,10 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Created by 11's papa on 2025/8/29
@@ -125,4 +127,13 @@ public class JacksonUtils {
             throw new RuntimeException(e);
         }
     }
+
+    public static Function<String, Map<String, Object>> jsonToMap = json -> {
+        try {
+            return json == null ? null : objectMapper.readValue(json, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
+            return Collections.emptyMap();
+        }
+    };
 }

@@ -103,6 +103,16 @@ const Setting: RouteRecordRaw = {
                     }
                 },
                 {
+                    path: 'usergroup',
+                    name: SettingRouteEnum.SETTING_ORGANIZATION_USER_GROUP,
+                    component: () => import('/@/views/setting/organization/user-group/index.vue'),
+                    meta: {
+                        locale: '用户组',
+                        roles: ['ORGANIZATION_USER_ROLE:READ'],
+                        isTopMenu: true,
+                    },
+                },
+                {
                     path: 'project',
                     name: SettingRouteEnum.SETTING_ORGANIZATION_PROJECT,
                     component: () => import('/src/views/setting/organization/project/index.vue'),

@@ -57,7 +57,7 @@ const handleLogin = async () => {
           ![NO_RESOURCE_ROUTE_NAME, NO_PROJECT_ROUTE_NAME].includes(redirect as string) &&
           routerNameHasPermission(redirect as string, router.getRoutes());
       const currentRouteName = getFirstRouteNameByPermission(router.getRoutes());
-      console.log(currentRouteName)
+      // console.log(currentRouteName)
       router.push({
         name: redirectHasPermission ? (redirect as string) : currentRouteName,
         query: {

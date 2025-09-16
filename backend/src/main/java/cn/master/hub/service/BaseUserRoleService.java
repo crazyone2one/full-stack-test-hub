@@ -20,7 +20,18 @@ public interface BaseUserRoleService extends IService<UserRole> {
 
     UserRole add(UserRole userRole);
 
+    UserRole update(UserRole userRole);
+
     void delete(UserRole userRole, String defaultRoleId, String currentUserId, String orgId);
 
     void updatePermissionSetting(PermissionSettingUpdateRequest request);
+
+    UserRole getWithCheck(String id);
+
+    UserRole checkResourceExist(UserRole userRole);
+
+    void checkAdminUserRole(UserRole userRole);
+
+    void checkGlobalUserRole(UserRole userRole);
+    UserRole get(String id);
 }

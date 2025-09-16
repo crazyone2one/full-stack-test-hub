@@ -1,6 +1,8 @@
 package cn.master.hub.service.impl;
 
 import cn.master.hub.constants.InternalUserRole;
+import cn.master.hub.constants.UserRoleEnum;
+import cn.master.hub.constants.UserRoleScope;
 import cn.master.hub.constants.UserRoleType;
 import cn.master.hub.dto.Permission;
 import cn.master.hub.dto.PermissionDefinitionItem;
@@ -16,6 +18,7 @@ import cn.master.hub.service.BaseUserRolePermissionService;
 import cn.master.hub.service.BaseUserRoleRelationService;
 import cn.master.hub.service.BaseUserRoleService;
 import cn.master.hub.util.JacksonUtils;
+import cn.master.hub.util.ServiceUtils;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
@@ -29,7 +32,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
+import static cn.master.hub.handler.result.CommonResultCode.ADMIN_USER_ROLE_PERMISSION;
 import static cn.master.hub.handler.result.CommonResultCode.INTERNAL_USER_ROLE_PERMISSION;
+import static cn.master.hub.handler.result.ResultCode.NO_GLOBAL_USER_ROLE_PERMISSION;
 
 /**
  * 用户组 服务层实现。
@@ -46,7 +51,7 @@ public class BaseUserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRol
 
     @Override
     public List<UserRole> list() {
-        List<UserRole> userRoles = queryChain().where(USER_ROLE.SCOPE_ID.eq("global")).list();
+        List<UserRole> userRoles = queryChain().where(USER_ROLE.SCOPE_ID.eq(UserRoleScope.GLOBAL)).list();
         // 先按照类型排序，再按照创建时间排序
         userRoles.sort(Comparator.comparingInt(this::getTypeOrder)
                 .thenComparingInt(item -> getInternal(item.getInternal()))
@@ -116,6 +121,12 @@ public class BaseUserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRol
     }
 
     @Override
+    public UserRole update(UserRole userRole) {
+        mapper.update(userRole);
+        return userRole;
+    }
+
+    @Override
     public void delete(UserRole userRole, String defaultRoleId, String currentUserId, String orgId) {
         String id = userRole.getId();
         checkInternalUserRole(userRole);
@@ -131,6 +142,40 @@ public class BaseUserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRol
     @Override
     public void updatePermissionSetting(PermissionSettingUpdateRequest request) {
         baseUserRolePermissionService.updatePermissionSetting(request);
+    }
+
+    @Override
+    public UserRole getWithCheck(String id) {
+        return checkResourceExist(mapper.selectOneById(id));
+    }
+
+    @Override
+    public UserRole checkResourceExist(UserRole userRole) {
+        return ServiceUtils.checkResourceExist(userRole, "permission.system_user_role.name");
+    }
+
+    @Override
+    public void checkAdminUserRole(UserRole userRole) {
+        if (Strings.CS.equalsAny(userRole.getId(), InternalUserRole.ADMIN.getValue(),
+                InternalUserRole.ORG_ADMIN.getValue(), InternalUserRole.PROJECT_ADMIN.getValue())) {
+            throw new CustomException(ADMIN_USER_ROLE_PERMISSION);
+        }
+    }
+
+    @Override
+    public void checkGlobalUserRole(UserRole userRole) {
+        if (Strings.CS.equals(userRole.getScopeId(), UserRoleEnum.GLOBAL.toString())) {
+            throw new CustomException(NO_GLOBAL_USER_ROLE_PERMISSION);
+        }
+    }
+
+    @Override
+    public UserRole get(String id) {
+        UserRole userRole = mapper.selectOneById(id);
+        if (userRole == null) {
+            throw new CustomException(Translator.get("user_role_not_exist"));
+        }
+        return userRole;
     }
 
     private void checkOneLimitRole(String roleId, String defaultRoleId, String currentUserId, String orgId) {
