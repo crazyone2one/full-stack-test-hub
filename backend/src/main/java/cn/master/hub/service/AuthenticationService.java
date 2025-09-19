@@ -8,6 +8,7 @@ import cn.master.hub.dto.request.RefreshTokenRequest;
 import cn.master.hub.dto.response.AuthenticationResponse;
 import cn.master.hub.entity.*;
 import cn.master.hub.handler.JwtTokenProvider;
+import cn.master.hub.handler.exception.RefreshTokenExpiredException;
 import cn.master.hub.handler.result.ResultHolder;
 import com.mybatisflex.core.query.QueryChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -68,7 +69,7 @@ public class AuthenticationService {
                 .map(userId -> {
                     String accessToken = jwtTokenProvider.generateToken(userId, "access_token");
                     return new AuthenticationResponse(accessToken, refreshTokenRequest.refreshToken(), null);
-                }).orElseThrow(() -> new RuntimeException("Refresh Token is not in DB..!!"));
+                }).orElseThrow(() -> new RefreshTokenExpiredException("REFRESH_TOKEN_EXPIRED"));
     }
 
     public ResultHolder logout(HttpServletRequest request, HttpServletResponse response) {

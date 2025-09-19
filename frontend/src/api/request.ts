@@ -33,8 +33,15 @@ const {onAuthRequired, onResponseRefreshToken} = createServerTokenAuthentication
                     refreshToken
                 } = await authApi.refreshToken({"refreshToken": getToken().refreshToken});
                 setToken(accessToken, refreshToken)
-            } catch (error) {
-                // token刷新失败，跳转回登录页
+            } catch (error: any) {
+                console.log(error)
+                // 检查是否是refresh token过期的特定错误
+                if (error.message === 'REFRESH_TOKEN_EXPIRED') {
+                    // 显示明确的过期提示
+                    window.$message?.error('登录已过期，请重新登录');
+                }
+                // 清除token并跳转到登录页
+                clearToken();
                 location.href = '/login';
                 // 并抛出错误
                 throw error;

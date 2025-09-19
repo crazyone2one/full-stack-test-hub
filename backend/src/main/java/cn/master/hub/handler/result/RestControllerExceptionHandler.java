@@ -3,6 +3,7 @@ package cn.master.hub.handler.result;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.exception.IResultCode;
+import cn.master.hub.handler.exception.RefreshTokenExpiredException;
 import cn.master.hub.util.ServiceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -69,7 +70,11 @@ public class RestControllerExceptionHandler {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResultHolder.error(code, Translator.get(message, message), ex.getMessage()));
         }
     }
-
+    @ExceptionHandler(RefreshTokenExpiredException.class)
+    public ResponseEntity<ResultHolder> handleRefreshTokenExpired(RefreshTokenExpiredException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ResultHolder.error(100401, "登录已过期，请重新登录"));
+    }
     @ExceptionHandler({Exception.class})
     public ResponseEntity<ResultHolder> handleException(Exception e) {
         log.error("系统异常:", e);
