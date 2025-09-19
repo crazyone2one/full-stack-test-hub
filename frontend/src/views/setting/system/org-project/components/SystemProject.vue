@@ -147,6 +147,9 @@ const currentUserDrawer = reactive({
   projectId: "",
   currentName: "",
 });
+const getRowClass = (record: ProjectTableItem) => {
+  return record.id === currentUserDrawer.projectId ? 'selected-row-class' : ''
+}
 const showUserDrawer = (record: ProjectTableItem) => {
   currentUserDrawer.visible = true;
   currentUserDrawer.projectId = record.id;
@@ -171,6 +174,7 @@ onMounted(() => {
     :columns="columns"
     :data="data"
     :row-key="(row: ProjectTableItem) => row.id"
+    :row-class-name="getRowClass"
     @update:checked-row-keys="handleCheck"
   />
   <base-pagination
@@ -185,4 +189,8 @@ onMounted(() => {
   />
 </template>
 
-<style scoped></style>
+<style scoped>
+:deep(.selected-row-class td) {
+  background: rgba(197, 159, 227, 75) !important;
+}
+</style>
