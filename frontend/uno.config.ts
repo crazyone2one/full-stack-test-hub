@@ -13,7 +13,7 @@ import {FileSystemIconLoader} from '@iconify/utils/lib/loader/node-loaders'
 const iconsDir = "./src/assets/icons";
 export default defineConfig({
     shortcuts: {
-        'add-icon': 'i-mdi:plus-circle cursor-pointer text-[18px]',
+        'add-icon': 'i-mdi:plus-circle cursor-pointer',
         'one-line-text': 'overflow-hidden overflow-ellipsis whitespace-nowrap'
     },
     theme: {
