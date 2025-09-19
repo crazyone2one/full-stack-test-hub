@@ -5,10 +5,7 @@ import cn.master.hub.dto.system.OrgUserExtend;
 import cn.master.hub.dto.system.OrganizationDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
 import cn.master.hub.dto.system.UserExtendDTO;
-import cn.master.hub.dto.system.request.OrgMemberExtendProjectRequest;
-import cn.master.hub.dto.system.request.OrganizationMemberExtendRequest;
-import cn.master.hub.dto.system.request.OrganizationMemberRequest;
-import cn.master.hub.dto.system.request.OrganizationMemberUpdateRequest;
+import cn.master.hub.dto.system.request.*;
 import cn.master.hub.entity.SystemOrganization;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
@@ -46,4 +43,8 @@ public interface SystemOrganizationService extends IService<SystemOrganization> 
     void addMemberToProject(OrgMemberExtendProjectRequest orgMemberExtendProjectRequest, String currentUserName);
 
     List<OptionDTO> getUserRoleList(String organizationId);
+
+    Page<UserExtendDTO> getMemberList(MemberRequest request);
+
+    List<UserExtendDTO> getMemberOption(String sourceId, String keyword);
 }

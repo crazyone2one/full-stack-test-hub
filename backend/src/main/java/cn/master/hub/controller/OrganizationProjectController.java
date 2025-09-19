@@ -1,10 +1,12 @@
 package cn.master.hub.controller;
 
 import cn.master.hub.dto.request.AddProjectRequest;
+import cn.master.hub.dto.request.ProjectAddMemberRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
 import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.request.ProjectUserRequest;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.handler.log.annotation.Log;
 import cn.master.hub.handler.validation.Created;
@@ -83,4 +85,16 @@ public class OrganizationProjectController {
     public void disable(@PathVariable String id) {
         organizationProjectService.disable(id, SessionUtils.getCurrentUserName());
     }
+
+    @PostMapping("/user-list")
+    @Operation(summary = "系统设置-组织-项目-分页获取成员列表")
+    public Page<UserExtendDTO> getMemberList(@Validated @RequestBody ProjectUserRequest request) {
+        return organizationProjectService.getMemberList(request);
+    }
+    @PostMapping("/add-members")
+    @Operation(summary = "系统设置-组织-项目-添加成员")
+    public void addProjectMember(@Validated @RequestBody ProjectAddMemberRequest request) {
+        organizationProjectService.orgAddProjectMember(request, SessionUtils.getCurrentUserName());
+    }
+
 }

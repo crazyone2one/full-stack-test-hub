@@ -80,3 +80,11 @@ export interface IProjectBasicInfo {
     moduleIds: string[];
     resourcePoolList: { name: string; id: string }[]; // 资源池列表
 }
+export interface IAddUserToOrgOrProjectParams {
+    userIds?: string[];
+    organizationId?: string;
+    projectId?: string;
+    // 等待接口改动 将要废弃，以后用userIds
+    memberIds?: string[];
+    userRoleIds?: string[];
+}

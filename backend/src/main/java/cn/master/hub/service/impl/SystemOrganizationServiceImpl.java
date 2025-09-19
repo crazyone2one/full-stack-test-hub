@@ -3,10 +3,7 @@ package cn.master.hub.service.impl;
 import cn.master.hub.constants.*;
 import cn.master.hub.dto.OptionDTO;
 import cn.master.hub.dto.system.*;
-import cn.master.hub.dto.system.request.OrgMemberExtendProjectRequest;
-import cn.master.hub.dto.system.request.OrganizationMemberExtendRequest;
-import cn.master.hub.dto.system.request.OrganizationMemberRequest;
-import cn.master.hub.dto.system.request.OrganizationMemberUpdateRequest;
+import cn.master.hub.dto.system.request.*;
 import cn.master.hub.entity.*;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
@@ -476,6 +473,26 @@ public class SystemOrganizationServiceImpl extends ServiceImpl<SystemOrganizatio
                 .list();
         setUserRoleList(userRoleList, userRoles);
         return userRoleList;
+    }
+
+    @Override
+    public Page<UserExtendDTO> getMemberList(MemberRequest request) {
+        return QueryChain.of(SystemUser.class)
+                .select(QueryMethods.distinct(SYSTEM_USER.ALL_COLUMNS)).select("count(urr.id) > 0 as memberFlag")
+                .from(SYSTEM_USER).leftJoin(USER_ROLE_RELATION.as("urr")).on(USER_ROLE_RELATION.USER_ID.eq(SYSTEM_USER.ID))
+                .where(SYSTEM_USER.NAME.like(request.getKeyword()).or(SYSTEM_USER.EMAIL.like(request.getKeyword())))
+                .groupBy(SYSTEM_USER.ID)
+                .pageAs(new Page<>(request.getPage(), request.getPageSize()), UserExtendDTO.class);
+    }
+
+    @Override
+    public List<UserExtendDTO> getMemberOption(String sourceId, String keyword) {
+        return QueryChain.of(SystemUser.class)
+                .select(QueryMethods.distinct(SYSTEM_USER.ALL_COLUMNS)).select("count(urr.id) > 0 as memberFlag")
+                .from(SYSTEM_USER).leftJoin(USER_ROLE_RELATION.as("urr"))
+                .on(USER_ROLE_RELATION.USER_ID.eq(SYSTEM_USER.ID).and(USER_ROLE_RELATION.SOURCE_ID.eq(sourceId)))
+                .where(SYSTEM_USER.NAME.like(keyword).or(SYSTEM_USER.EMAIL.like(keyword)))
+                .groupBy(SYSTEM_USER.ID).listAs(UserExtendDTO.class);
     }
 
     private void updateProjectUserRelation(String currentUserName, String organizationId, SystemUser user, List<String> projectIds, List<LogDTO> logDTOList) {

@@ -2,6 +2,7 @@ package cn.master.hub.service;
 
 import cn.master.hub.dto.UserDTO;
 import cn.master.hub.dto.request.AddProjectRequest;
+import cn.master.hub.dto.request.ProjectAddMemberRequest;
 import cn.master.hub.dto.request.ProjectRequest;
 import cn.master.hub.dto.request.ProjectSwitchRequest;
 import cn.master.hub.dto.response.ProjectDTO;
@@ -48,4 +49,8 @@ public interface SystemProjectService extends IService<SystemProject> {
     Page<ProjectDTO> getProjectPage(SystemProjectRequest request);
 
     Page<UserExtendDTO> getProjectMember(ProjectMemberRequest request);
+
+    void addMemberByProject(ProjectAddMemberRequest request, String currentUserName);
+
+    int removeProjectMember(String projectId, String userId, String currentUserName);
 }

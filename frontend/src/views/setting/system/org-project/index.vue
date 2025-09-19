@@ -6,7 +6,7 @@ import AddProjectModal from "/@/views/setting/organization/project/components/Ad
 import {useRequest} from "alova/client";
 import {orgProjectApis} from "/@/api/modules/org-project.ts";
 
-const currentTable = ref('organization');
+const currentTable = ref('project');
 const keyword = ref('');
 const organizationCount = ref(0);
 const projectCount = ref(0);

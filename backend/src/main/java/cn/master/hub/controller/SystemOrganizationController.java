@@ -5,8 +5,11 @@ import cn.master.hub.dto.request.OrganizationEditRequest;
 import cn.master.hub.dto.system.OrganizationDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
 import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.request.MemberRequest;
 import cn.master.hub.dto.system.request.OrganizationMemberRequest;
+import cn.master.hub.dto.system.request.OrganizationMemberUpdateRequest;
 import cn.master.hub.entity.SystemOrganization;
+import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.service.SystemOrganizationService;
 import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
@@ -144,4 +147,24 @@ public class SystemOrganizationController {
         return systemOrganizationService.getTotal(organizationId);
     }
 
+    @GetMapping("/get-option/{sourceId}")
+    @Operation(summary = "系统设置-系统-组织与项目-获取成员下拉选项")
+    @Parameter(name = "sourceId", description = "组织ID或项目ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    public List<UserExtendDTO> getMemberOption(@PathVariable String sourceId,
+                                               @Schema(description = "查询关键字，根据邮箱和用户名查询")
+                                               @RequestParam(value = "keyword", required = false) String keyword) {
+        return systemOrganizationService.getMemberOption(sourceId, keyword);
+    }
+
+    @PostMapping("/member-list")
+    @Operation(summary = "系统设置-系统-组织与项目-获取添加成员列表")
+    public Page<UserExtendDTO> getMemberOptionList(@Validated @RequestBody MemberRequest request) {
+        return systemOrganizationService.getMemberList(request);
+    }
+
+    @PostMapping("/update-member")
+    @Operation(summary = "系统设置-系统-组织与项目-组织-成员-更新成员用户组")
+    public void updateMember(@Validated @RequestBody OrganizationMemberUpdateRequest organizationMemberExtendRequest) {
+        systemOrganizationService.updateMember(organizationMemberExtendRequest, SessionUtils.getCurrentUserName(), "/system/organization/update-member", OperationLogModule.SETTING_SYSTEM_ORGANIZATION);
+    }
 }

@@ -1,6 +1,7 @@
 package cn.master.hub.controller;
 
 import cn.master.hub.dto.UserDTO;
+import cn.master.hub.dto.request.ProjectAddMemberRequest;
 import cn.master.hub.dto.request.ProjectRequest;
 import cn.master.hub.dto.request.ProjectSwitchRequest;
 import cn.master.hub.dto.response.ProjectDTO;
@@ -15,6 +16,7 @@ import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -115,9 +117,23 @@ public class SystemProjectController {
     public UserDTO switchProject(@RequestBody ProjectSwitchRequest request) {
         return systemProjectService.switchProject(request, Objects.requireNonNull(SessionUtils.getCurrentUser()).user().getId());
     }
+
     @PostMapping("/member-list")
     @Operation(summary = "系统设置-系统-组织与项目-项目-成员列表")
     public Page<UserExtendDTO> getProjectMember(@Validated @RequestBody ProjectMemberRequest request) {
         return systemProjectService.getProjectMember(request);
+    }
+
+    @PostMapping("/add-member")
+    @Operation(summary = "系统设置-系统-组织与项目-项目-添加成员")
+    public void addProjectMember(@Validated @RequestBody ProjectAddMemberRequest request) {
+        systemProjectService.addMemberByProject(request, SessionUtils.getCurrentUserName());
+    }
+    @GetMapping("/remove-member/{projectId}/{userId}")
+    @Operation(summary = "系统设置-系统-组织与项目-项目-移除成员")
+    @Parameter(name = "userId", description = "用户id", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    @Parameter(name = "projectId", description = "项目id", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    public int removeProjectMember(@PathVariable String projectId, @PathVariable String userId) {
+        return systemProjectService.removeProjectMember(projectId, userId, SessionUtils.getCurrentUserName());
     }
 }

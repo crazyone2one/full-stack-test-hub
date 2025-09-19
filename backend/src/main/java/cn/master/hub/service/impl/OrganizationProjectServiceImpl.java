@@ -1,25 +1,32 @@
 package cn.master.hub.service.impl;
 
 import cn.master.hub.dto.request.AddProjectRequest;
+import cn.master.hub.dto.request.ProjectAddMemberRequest;
 import cn.master.hub.dto.response.ProjectDTO;
 import cn.master.hub.dto.system.OrganizationProjectRequest;
 import cn.master.hub.dto.system.UpdateProjectRequest;
 import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.request.ProjectUserRequest;
 import cn.master.hub.entity.SystemOrganization;
 import cn.master.hub.entity.SystemProject;
 import cn.master.hub.entity.SystemUser;
+import cn.master.hub.entity.UserRoleRelation;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.log.OperationLogModule;
+import cn.master.hub.handler.log.OperationLogType;
+import cn.master.hub.service.CommonProjectService;
 import cn.master.hub.service.OrganizationProjectService;
 import cn.master.hub.service.SystemProjectService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryMethods;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 import static cn.master.hub.entity.table.SystemOrganizationTableDef.SYSTEM_ORGANIZATION;
 import static cn.master.hub.entity.table.SystemProjectTableDef.SYSTEM_PROJECT;
@@ -33,6 +40,7 @@ import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELA
 @RequiredArgsConstructor
 public class OrganizationProjectServiceImpl implements OrganizationProjectService {
     private final SystemProjectService projectService;
+    private final CommonProjectService commonProjectService;
     private final static String PREFIX = "/organization-project";
     private final static String ADD_PROJECT = PREFIX + "/add";
     private final static String UPDATE_PROJECT = PREFIX + "/update";
@@ -65,7 +73,7 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
     public List<UserExtendDTO> getUserAdminList(String organizationId, String keyword) {
         checkOrgIsExist(organizationId);
         return QueryChain.of(SystemUser.class)
-                .select(QueryMethods.distinct(SYSTEM_USER.ID, SYSTEM_USER.NAME, SYSTEM_USER.EMAIL,SYSTEM_USER.CREATE_TIME))
+                .select(QueryMethods.distinct(SYSTEM_USER.ID, SYSTEM_USER.NAME, SYSTEM_USER.EMAIL, SYSTEM_USER.CREATE_TIME))
                 .from(SYSTEM_USER).leftJoin(USER_ROLE_RELATION).on(USER_ROLE_RELATION.USER_ID.eq(SYSTEM_USER.ID))
                 .where(USER_ROLE_RELATION.SOURCE_ID.eq(organizationId))
                 .and(SYSTEM_USER.NAME.like(keyword).or(SYSTEM_USER.EMAIL.like(keyword)))
@@ -86,6 +94,35 @@ public class OrganizationProjectServiceImpl implements OrganizationProjectServic
     @Override
     public void disable(String id, String updateUser) {
         projectService.disable(id, updateUser);
+    }
+
+    @Override
+    public Page<UserExtendDTO> getMemberList(ProjectUserRequest request) {
+        checkOrgIsExist(request.getOrganizationId());
+        if (Objects.isNull(projectService.getById(request.getProjectId()))) {
+            throw new CustomException(Translator.get("project_is_not_exist"));
+        }
+        List<UserRoleRelation> userRoleRelations = QueryChain.of(UserRoleRelation.class).where(USER_ROLE_RELATION.SOURCE_ID.eq(request.getOrganizationId())).list();
+        List<String> userIds = userRoleRelations.stream().map(UserRoleRelation::getUserId).distinct().toList();
+        if (CollectionUtils.isNotEmpty(userIds)) {
+            QueryChain<UserRoleRelation> userRoleRelationQueryChain = QueryChain.of(UserRoleRelation.class)
+                    .select(USER_ROLE_RELATION.ID, USER_ROLE_RELATION.USER_ID)
+                    .where(USER_ROLE_RELATION.SOURCE_ID.eq(request.getProjectId()));
+            return QueryChain.of(SystemUser.class)
+                    .select(QueryMethods.distinct(SYSTEM_USER.ID, SYSTEM_USER.NAME, SYSTEM_USER.EMAIL))
+                    .select("count(temp.id) > 0 as memberFlag")
+                    .from(SYSTEM_USER.as("u")).leftJoin(userRoleRelationQueryChain).as("temp").on("temp.user_id = u.id")
+                    .where(SYSTEM_USER.ID.in(userIds)).and(SYSTEM_USER.NAME.like(request.getKeyword()).or(SYSTEM_USER.EMAIL.like(request.getKeyword())))
+                    .groupBy(SYSTEM_USER.ID).orderBy(SYSTEM_USER.CREATE_TIME.desc())
+                    .pageAs(new Page<>(request.getPage(), request.getPageSize()), UserExtendDTO.class);
+        }
+        return new Page<>();
+    }
+
+    @Override
+    public void orgAddProjectMember(ProjectAddMemberRequest request, String currentUserName) {
+        commonProjectService.addProjectUser(request, currentUserName, ADD_MEMBER,
+                OperationLogType.ADD.name(), Translator.get("add"), OperationLogModule.SETTING_ORGANIZATION_PROJECT);
     }
 
     private void checkOrgIsExist(String organizationId) {

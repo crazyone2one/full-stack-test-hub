@@ -10,6 +10,7 @@ import RemoveButton from "/@/components/RemoveButton.vue";
 import TagGroup from "/@/components/TagGroup.vue";
 import {memberApis} from "/@/api/modules/member.ts";
 import {projectMemberApis} from "/@/api/modules/project-member.ts";
+import AddUserModal from "/@/views/setting/system/org-project/components/AddUserModal.vue";
 
 export interface projectDrawerProps {
   visible: boolean;
@@ -24,6 +25,7 @@ const emit = defineEmits<{
   (e: "requestFetchData"): void;
 }>();
 const keyword = ref("");
+const userVisible = ref(false);
 const userGroupOptions = ref<SelectOption[]>([]);
 const active = defineModel<boolean>("active", {
   type: Boolean,
@@ -63,11 +65,7 @@ const columns: DataTableColumns<IUserItem> = [
       }, {})
     },
   },
-  {
-    title: "邮箱",
-    key: "email",
-    width: 180,
-  },
+  {title: "邮箱", key: "email", width: 180,},
   {title: "手机", key: "phone"},
   {
     title: hasOperationPermission.value ? "操作" : "",
@@ -80,7 +78,8 @@ const columns: DataTableColumns<IUserItem> = [
             RemoveButton,
             {
               title: `确认移除 ${record.name} 这个用户吗？`,
-              subTitleTip: props.organizationId ? '移除后，将失去组织权限' : '移除后，将失去项目权限'
+              subTitleTip: props.organizationId ? '移除后，将失去组织权限' : '移除后，将失去项目权限',
+              onOk: () => handleRemove(record)
             },
             {}
         );
@@ -140,6 +139,24 @@ const handleUserGroupChange = (val: boolean, record: IUserItem & Record<string, 
     console.log(record)
   }
 }
+const handleAddMember = () => {
+  userVisible.value = true;
+};
+const handleAddMemberSubmit = () => {
+  fetchData();
+  emit('requestFetchData');
+}
+const handleRemove = async (record: IUserItem) => {
+  if (props.organizationId) {
+    await orgProjectApis.deleteUserFromOrgOrProject(props.organizationId, record.id);
+  }
+  if (props.projectId) {
+    await orgProjectApis.deleteUserFromOrgOrProject(props.projectId, record.id, false);
+  }
+  window.$message.success('移除成功');
+  await fetchData();
+  emit('requestFetchData');
+}
 watch(
     [() => props.projectId, () => props.organizationId, () => props.visible],
     () => {
@@ -173,7 +190,7 @@ watch(
       </template>
       <div>
         <div class="flex flex-row justify-between">
-          <n-button class="mr-3">添加成员</n-button>
+          <n-button type="info" secondary class="mr-3" @click="handleAddMember">添加成员</n-button>
           <div>
             <n-input
                 v-model:value="keyword"
@@ -198,6 +215,9 @@ watch(
       </div>
     </n-drawer-content>
   </n-drawer>
+  <add-user-modal v-model:show-modal="userVisible" :user-group-options="userGroupOptions"
+                  :project-id="props.projectId" :organization-id="props.organizationId"
+                  @submit="handleAddMemberSubmit"/>
 </template>
 
 <style scoped></style>
