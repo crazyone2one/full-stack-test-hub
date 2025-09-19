@@ -32,7 +32,7 @@ const {send: fetchData} = useRequest((id) => {
   } else {
     return userGroupApis.getAuthByUserGroup(id);
   }
-}, {immediate: false})
+}, {immediate: false, force: true})
 const initData = (id: string) => {
   tableData.value = []; // 重置数据，可以使表格滚动条重新计算
   fetchData(id).then(res => {
