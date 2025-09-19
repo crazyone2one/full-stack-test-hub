@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {AuthScopeEnum, type AuthScopeEnumType} from "/@/enums/common-enum.ts";
-import {computed, inject, ref, onMounted} from "vue";
+import {computed, inject, onMounted, ref} from "vue";
 import CreateOrUpdateUserGroup from "/@/views/setting/organization/user-group/components/CreateOrUpdateUserGroup.vue";
 import type {ICurrentUserGroupItem, IUserGroupItem, PopVisible} from "/@/api/types/user-group.ts";
 import {hasAnyPermission} from "/@/utils/permissions.ts";
@@ -151,16 +151,18 @@ defineExpose({
     <div v-if="showSystem" class="mt-2">
       <div class="flex items-center justify-between px-[4px] py-[7px]">
         <div class="flex flex-row items-center gap-1 text-[#9597a4]">
-          <div v-if="systemToggle" class="i-mdi:chevron-down-circle cursor-pointer" @click="systemToggle = false"/>
-          <div v-else class="i-mdi:chevron-right-circle cursor-pointer" @click="systemToggle = true"/>
+          <div v-if="systemToggle" class="i-mdi:chevron-down-circle cursor-pointer text-[16px]"
+               @click="systemToggle = false"/>
+          <div v-else class="i-mdi:chevron-right-circle cursor-pointer text-[16px]" @click="systemToggle = true"/>
           <div class="text-[14px]">系统用户组</div>
         </div>
         <create-or-update-user-group :list="systemUserGroupList" :visible="systemUserGroupVisible"
                                      :auth-scope="AuthScopeEnum.SYSTEM"
-                                     @cancel="systemUserGroupVisible = false">
+                                     @cancel="systemUserGroupVisible = false"
+                                     @submit="handleCreateUserGroup">
           <n-tooltip>
             <template #trigger>
-              <div class="i-mdi:plus-circle text-[#9597a4]" @click="handleCreateUG(AuthScopeEnum.SYSTEM)"/>
+              <div class="add-icon text-[#36ad6a]  text-[20px]" @click="handleCreateUG(AuthScopeEnum.SYSTEM)"/>
             </template>
             创建系统用户组
           </n-tooltip>
@@ -168,17 +170,18 @@ defineExpose({
       </div>
       <Transition>
         <div v-if="systemToggle">
-          <div v-for="item in systemUserGroupList" :key="item.id">
+          <div v-for="item in systemUserGroupList" :key="item.id" class="list-item"
+               :class="{ '!bg-[#accb9f]': item.id === currentId }"
+               @click="handleListItemClick(item)">
             <div class="flex items-center justify-between px-[4px] py-[7px]">
-              <div class="flex flex-row items-center gap-1 text-[#9597a4]">
-                <div class="i-mdi:chevron-right-circle"/>
-                <div class="text-[14px]">{{ item.name }}</div>
-              </div>
-              <create-or-update-user-group :list="systemUserGroupList" v-bind="popVisible[item.id]">
+              <create-or-update-user-group :list="systemUserGroupList"
+                                           :auth-scope="popVisible[item.id].authScope"
+                                           :visible="popVisible[item.id].visible"
+                                           :default-name="popVisible[item.id].defaultName">
                 <div class="flex max-w-[100%] grow flex-row items-center justify-between">
                   <div
-                      class="list-item-name one-line-text text-[var(--color-text-1)]"
-                      :class="{ '!text-[#129cff]': item.id === currentId }"
+                      class="list-item-name one-line-text"
+                      :class="{ 'text-[#18a058]': item.id === currentId }"
                   >
                     {{ item.name }}
                   </div>
@@ -187,20 +190,20 @@ defineExpose({
                        class="list-item-action flex flex-row items-center gap-[8px] opacity-0"
                        :class="{ '!opacity-100': item.id === currentId }">
                     <div v-if="item.type === systemType">
-                      <div class="i-mdi:plus-circle text-[#9597a4]" @click="handleAddMember"/>
+                      <div class="add-icon text-[16px]" @click="handleAddMember"/>
                     </div>
                   </div>
                 </div>
               </create-or-update-user-group>
             </div>
-            <n-divider class="my-[0px] mt-[6px]"/>
           </div>
+          <n-divider class="my-[0px] mt-[6px]"/>
         </div>
       </Transition>
     </div>
     <div v-if="showOrg" class="mt-2">
       <div class="flex items-center justify-between px-[4px] py-[7px]">
-        <div class="flex flex-row items-center gap-1 text-[#9597a4]">
+        <div class="flex flex-row items-center gap-1">
           <div v-if="orgToggle" class="i-mdi:chevron-down-circle cursor-pointer text-[16px]"
                @click="orgToggle = false"/>
           <div v-else class="i-mdi:chevron-right-circle cursor-pointer text-[16px]" @click="orgToggle = true"/>
@@ -212,7 +215,7 @@ defineExpose({
                                      @submit="handleCreateUserGroup">
           <n-tooltip>
             <template #trigger>
-              <div class="add-icon" @click="orgUserGroupVisible = true"/>
+              <div class="add-icon text-[#36ad6a]  text-[20px]" @click="orgUserGroupVisible = true"/>
             </template>
             创建组织用户组
           </n-tooltip>
@@ -221,8 +224,8 @@ defineExpose({
       <Transition>
         <div v-if="orgToggle">
           <div v-for="item in orgUserGroupList" :key="item.id"
-               class="list-item flex cursor-pointer items-center hover:bg-white"
-               :class="{ '!bg-[#18a058]': item.id === currentId }"
+               class="list-item"
+               :class="{ '!bg-[#accb9f]': item.id === currentId }"
                @click="handleListItemClick(item)">
             <create-or-update-user-group :list="orgUserGroupList"
                                          :auth-scope="popVisible[item.id].authScope"
@@ -230,9 +233,9 @@ defineExpose({
               <div class="flex w-full grow flex-row items-center justify-between">
                 <div class="flex w-[calc(100%-56px)] items-center gap-[4px]"
                 >
-                  <div class="list-item-action one-line-text" :class="`${
-                        systemType === AuthScopeEnum.ORGANIZATION ? 'max-w-[calc(100%-86px)]' : 'w-full'
-                      }`">
+                  <div class="list-item-action one-line-text"
+                       :class="`${systemType === AuthScopeEnum.ORGANIZATION ? 'max-w-[calc(100%-86px)]' : 'w-full'} ${item.id === currentId ? 'text-[#18a058]' : ''}`"
+                  >
                     {{ item.name }}
                   </div>
                   <div v-if="systemType === AuthScopeEnum.ORGANIZATION">
@@ -262,8 +265,8 @@ defineExpose({
                 </div>
               </div>
             </create-or-update-user-group>
-            <n-divider v-if="showSystem" class="my-[0px] mt-[6px]"/>
           </div>
+          <n-divider v-if="showSystem" class="my-[0px] mt-[6px]"/>
         </div>
       </Transition>
     </div>
@@ -274,12 +277,14 @@ defineExpose({
           <div v-else class="i-mdi:chevron-right-circle" @click="projectToggle = true"/>
           <div class="text-[14px]">项目用户组</div>
         </div>
-        <create-or-update-user-group :list="projectUserGroupList" :visible="projectUserGroupVisible"
+        <create-or-update-user-group :list="projectUserGroupList"
+                                     :visible="projectUserGroupVisible"
                                      :auth-scope="AuthScopeEnum.PROJECT"
-                                     @cancel="projectUserGroupVisible = false">
+                                     @cancel="projectUserGroupVisible = false"
+                                     @submit="handleCreateUserGroup">
           <n-tooltip>
             <template #trigger>
-              <div class="i-mdi:plus-circle text-[#9597a4]" @click="projectUserGroupVisible = true"/>
+              <div class="add-icon text-[#36ad6a]  text-[20px]" @click="projectUserGroupVisible = true"/>
             </template>
             创建项目用户组
           </n-tooltip>
@@ -287,13 +292,12 @@ defineExpose({
       </div>
       <Transition>
         <div v-if="projectToggle">
-          <div v-for="item in projectUserGroupList" :key="item.id" @click="handleListItemClick(item)">
+          <div v-for="item in projectUserGroupList" :key="item.id" class="list-item"
+               :class="{ '!bg-[#accb9f]': item.id === currentId }"
+               @click="handleListItemClick(item)">
             <div class="flex items-center justify-between px-[4px] py-[7px]">
-              <!--              <div class="flex flex-row items-center gap-1 text-[#9597a4]">-->
-              <!--                <div class="i-mdi:chevron-right-circle"/>-->
-              <!--                <div class="text-[14px]">{{ item.name }}</div>-->
-              <!--              </div>-->
-              <create-or-update-user-group :list="projectUserGroupList" v-bind="popVisible[item.id]">
+              <create-or-update-user-group :list="projectUserGroupList" :auth-scope="popVisible[item.id].authScope"
+                                           :visible="popVisible[item.id].visible">
                 <div class="flex max-w-[100%] grow flex-row items-center justify-between">
                   <div
                       class="list-item-name one-line-text text-[var(--color-text-1)]"
@@ -314,8 +318,8 @@ defineExpose({
                 </div>
               </create-or-update-user-group>
             </div>
-            <n-divider v-if="showSystem" class="my-[0px] mt-[6px]"/>
           </div>
+          <n-divider v-if="showSystem" class="my-[0px] mt-[6px]"/>
         </div>
       </Transition>
     </div>
@@ -324,8 +328,6 @@ defineExpose({
 
 <style scoped>
 .list-item {
-  padding: 7px 4px 7px 20px;
-  height: 38px;
   border-radius: 2px;
 
   &:hover .list-item-action {
