@@ -2,11 +2,12 @@
 import type {FormInst, FormRules, SelectOption} from "naive-ui";
 import type {CreateOrUpdateOrgProjectParams} from "/@/api/types/project.ts";
 import {computed, ref, watchEffect} from "vue";
-import {useForm} from "alova/client";
+import {useForm, useRequest} from "alova/client";
 import {projectManagementApis} from "/@/api/modules/project-management.ts";
 import {useAppStore} from "/@/store";
 import UserSelector from "/@/components/user-selector/index.vue";
 import {UserRequestTypeEnum} from "/@/components/user-selector/utils.ts";
+import {orgProjectApis} from "/@/api/modules/org-project.ts";
 
 const props = defineProps<{
   currentProject?: CreateOrUpdateOrgProjectParams;
@@ -43,6 +44,7 @@ const moduleOption = [
   // { label: 'menu.performanceTest', value: 'loadTest' },
 ];
 const affiliatedOrgOption = ref<SelectOption[]>([]);
+const {send: initAffiliatedOrgOption} = useRequest(() => orgProjectApis.getSystemOrgOption(), {immediate: false})
 const {
   form,
   reset,
@@ -80,6 +82,7 @@ const handleSubmit = () => {
   })
 }
 watchEffect(() => {
+  initAffiliatedOrgOption().then(res => affiliatedOrgOption.value = res)
   if (props.currentProject?.id) {
     if (props.currentProject) {
       console.log(props.currentProject)
@@ -121,7 +124,8 @@ watchEffect(() => {
           <n-input v-model:value="form.projectCode" clearable placeholder="请输入项目编码，不可与其他项目编码重复"/>
         </n-form-item>
         <n-form-item label="所属组织" path="organizationId">
-          <n-select v-model:value="form.organizationId" disabled :options="affiliatedOrgOption"
+          <n-select v-model:value="form.organizationId" :options="affiliatedOrgOption"
+                    default-value="100001"
                     placeholder="请选择所属组织"/>
         </n-form-item>
         <n-form-item label="项目管理员" path="userIds">
@@ -172,7 +176,7 @@ watchEffect(() => {
         <div class="flex flex-row gap-[14px]">
           <n-button secondary :loading="loading" @click="handleCancel(false)">取消</n-button>
           <n-button type="primary" :loading="loading" @click="handleSubmit">
-            {{ isEdit ? '确认' : '创建' }}
+            {{ isEdit ? '更新' : '创建' }}
           </n-button>
         </div>
       </div>

@@ -4,6 +4,9 @@ import cn.master.hub.dto.UserDTO;
 import cn.master.hub.dto.request.ProjectRequest;
 import cn.master.hub.dto.request.ProjectSwitchRequest;
 import cn.master.hub.dto.response.ProjectDTO;
+import cn.master.hub.dto.system.SystemProjectRequest;
+import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.request.ProjectMemberRequest;
 import cn.master.hub.entity.SystemProject;
 import cn.master.hub.handler.validation.Created;
 import cn.master.hub.handler.validation.Updated;
@@ -96,19 +99,25 @@ public class SystemProjectController {
     /**
      * 分页查询项目。
      *
-     * @param page 分页对象
+     * @param request 分页对象
      * @return 分页对象
      */
-    @GetMapping("page")
+    @PostMapping("page")
     @Operation(description = "分页查询项目")
-    public Page<SystemProject> page(@Parameter(description = "分页信息") Page<SystemProject> page) {
-        return systemProjectService.page(page);
+    public Page<ProjectDTO> page(@Validated @RequestBody SystemProjectRequest request) {
+        return systemProjectService.getProjectPage(request);
     }
+
     @PostMapping("/switch")
     @Operation(summary = "切换项目")
     //@RequiresPermissions(PermissionConstants.PROJECT_BASE_INFO_READ)
     //@CheckOwner(resourceId = "#request.projectId", resourceType = "project")
     public UserDTO switchProject(@RequestBody ProjectSwitchRequest request) {
         return systemProjectService.switchProject(request, Objects.requireNonNull(SessionUtils.getCurrentUser()).user().getId());
+    }
+    @PostMapping("/member-list")
+    @Operation(summary = "系统设置-系统-组织与项目-项目-成员列表")
+    public Page<UserExtendDTO> getProjectMember(@Validated @RequestBody ProjectMemberRequest request) {
+        return systemProjectService.getProjectMember(request);
     }
 }

@@ -1,16 +1,27 @@
 package cn.master.hub.controller;
 
 import cn.master.hub.dto.OptionDTO;
+import cn.master.hub.dto.request.OrganizationEditRequest;
+import cn.master.hub.dto.system.OrganizationDTO;
+import cn.master.hub.dto.system.OrganizationProjectRequest;
+import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.request.OrganizationMemberRequest;
 import cn.master.hub.entity.SystemOrganization;
 import cn.master.hub.service.SystemOrganizationService;
+import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 组织 控制层。
@@ -53,13 +64,15 @@ public class SystemOrganizationController {
     /**
      * 根据主键更新组织。
      *
-     * @param systemOrganization 组织
-     * @return {@code true} 更新成功，{@code false} 更新失败
+     * @param request 组织
      */
     @PutMapping("update")
     @Operation(description = "根据主键更新组织")
-    public boolean update(@RequestBody @Parameter(description = "组织主键") SystemOrganization systemOrganization) {
-        return systemOrganizationService.updateById(systemOrganization);
+    public void update(@RequestBody @Parameter(description = "组织主键") OrganizationEditRequest request) {
+        OrganizationDTO organizationDTO = new OrganizationDTO();
+        BeanUtils.copyProperties(request, organizationDTO);
+        organizationDTO.setUpdateUser(SessionUtils.getCurrentUserName());
+        systemOrganizationService.update(organizationDTO);
     }
 
     /**
@@ -71,6 +84,28 @@ public class SystemOrganizationController {
     @Operation(description = "查询所有组织")
     public List<SystemOrganization> list() {
         return systemOrganizationService.list();
+    }
+
+    @PostMapping("/list-member")
+    @Operation(summary = "系统设置-系统-组织与项目-组织-获取组织成员列表")
+    public Page<UserExtendDTO> listMember(@Validated @RequestBody OrganizationProjectRequest request) {
+        return systemOrganizationService.getMemberPageBySystem(request);
+    }
+
+    @PostMapping("/add-member")
+    @Operation(summary = "系统设置-系统-组织与项目-组织-添加组织成员")
+    public void addMember(@Validated @RequestBody OrganizationMemberRequest request) {
+        systemOrganizationService.addMemberBySystem(request, SessionUtils.getCurrentUserName());
+    }
+
+    @GetMapping("/remove-member/{organizationId}/{userId}")
+    @Operation(summary = "系统设置-系统-组织与项目-组织-删除组织成员")
+    @Parameters({
+            @Parameter(name = "organizationId", description = "组织ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED)),
+            @Parameter(name = "userId", description = "成员ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    })
+    public void removeMember(@PathVariable String organizationId, @PathVariable String userId) {
+        systemOrganizationService.removeMember(organizationId, userId, SessionUtils.getCurrentUserName());
     }
 
     /**
@@ -102,4 +137,11 @@ public class SystemOrganizationController {
     public List<OptionDTO> listAll() {
         return systemOrganizationService.listAll();
     }
+
+    @GetMapping("/total")
+    @Operation(summary = "系统设置-系统-组织与项目-组织-获取组织和项目总数")
+    public Map<String, Long> getTotal(@RequestParam(value = "organizationId", required = false) String organizationId) {
+        return systemOrganizationService.getTotal(organizationId);
+    }
+
 }

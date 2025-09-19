@@ -1,18 +1,21 @@
 package cn.master.hub.entity;
 
+import cn.master.hub.handler.validation.Created;
+import cn.master.hub.handler.validation.Updated;
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.Table;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-import java.io.Serial;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 组织 实体类。
@@ -44,16 +47,13 @@ public class SystemOrganization implements Serializable {
     @Schema(description = "组织编号")
     private Long num;
 
-    /**
-     * 组织名称
-     */
-    @Schema(description = "组织名称")
+    @Schema(description = "组织名称", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "{organization.name.not_blank}", groups = {Created.class, Updated.class})
+    @Size(min = 1, max = 255, message = "{organization.name.length_range}", groups = {Created.class, Updated.class})
     private String name;
 
-    /**
-     * 描述
-     */
-    @Schema(description = "描述")
+    @Schema(description =  "描述")
+    @Size(max = 1000, groups = {Created.class, Updated.class})
     private String description;
 
     /**

@@ -1,22 +1,59 @@
 <script setup lang="ts">
-import {computed, h, onMounted, ref, useTemplateRef} from "vue";
+import {computed, h, onMounted, ref, useTemplateRef,} from "vue";
 import {useAppStore} from "/@/store";
 import {type IUserGroupItem} from "/@/api/types/user-group.ts";
-import {type DataTableColumns, type DataTableRowKey, NButton, NDivider} from "naive-ui";
+import {type DataTableColumns, type DataTableRowKey, NButton, NDivider, NInput} from "naive-ui";
 import {usePagination} from "alova/client";
 import {userGroupApis} from "/@/api/modules/user-group.ts";
 import {hasAnyPermission} from "/@/utils/permissions.ts";
 import EditUserGroup from "/@/views/project-management/components/EditUserGroup.vue";
 
+// interface OnUpdateValue {
+//   (value: string): void
+// }
 
 const appStore = useAppStore();
 const keyword = ref('')
 const addUserGroupVisible = ref(false)
 const editUserGroupRef = useTemplateRef<InstanceType<typeof EditUserGroup>>('editUserGroup')
 const currentProjectId = computed(() => appStore.currentProjectId);
+// const ShowOrEdit=defineComponent({
+//   props: {
+//     value: [String, Number],
+//     onUpdateValue: [Function, Array] as PropType<OnUpdateValue>
+//   },
+//   setup(props) {
+//     const isEdit = ref(false)
+//     const inputRef = ref<InputInst | null>(null)
+//     const inputValue = ref(props.value)
+//     function handleOnClick() {
+//       isEdit.value = true
+//       nextTick(() => {
+//         inputRef.value?.focus()
+//       })
+//     }
+//     function handleChange() {
+//       props.onUpdateValue?.(String(inputValue.value))
+//       isEdit.value = false
+//     }
+//     return ()=>h('div', {onClick: handleOnClick}, isEdit.value
+//         ? h(NInput, {
+//           ref: inputRef,
+//           value: String(inputValue.value),
+//           onUpdateValue: (v) => {
+//             inputValue.value = v
+//           },
+//           onChange: handleChange,
+//           onBlur: handleChange
+//         })
+//         : props.value)
+//   }
+// })
 const columns: DataTableColumns<IUserGroupItem> = [
   {
     title: '用户组名称', key: 'name', render(record) {
+      // return h(ShowOrEdit,{value: `${record.name}(${record.internal ? '系统内置' : record.scopeId === 'global' ? '系统自定义' : '自定义'})`,
+      //   onUpdateValue(v) {data.value[index].name = v}},{})
       return h('div', {class: 'flex flex-row items-center gap-[4px]'}, {
         default: () => [
           h('div', {class: 'one-line-text'}, {default: () => record.name}),
@@ -36,7 +73,7 @@ const columns: DataTableColumns<IUserGroupItem> = [
           if (hasAnyPermission(['PROJECT_GROUP:READ'])) {
             operations.push(h(NButton, {text: true, class: '!mr-0'}, {default: () => '查看权限'}))
             if (record.scopeId !== 'global') {
-              operations.push(h(NDivider, {vertical:true}, {}));
+              operations.push(h(NDivider, {vertical: true}, {}));
             }
           }
           if (record.scopeId !== 'global') {

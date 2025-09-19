@@ -70,7 +70,47 @@ const Setting: RouteRecordRaw = {
                         locale: '用户',
                         isTopMenu: true,
                     }
-                }
+                },
+                {
+                    path: 'usergroup',
+                    name: SettingRouteEnum.SETTING_SYSTEM_USER_GROUP,
+                    component: () => import('/@/views/setting/system/user-group/index.vue'),
+                    meta: {
+                        locale: '用户组',
+                        roles: ['SYSTEM_USER_ROLE:READ'],
+                        isTopMenu: true,
+                    },
+                },
+                {
+                    path: 'organization-and-project',
+                    name: SettingRouteEnum.SETTING_SYSTEM_ORGANIZATION,
+                    component: () => import('/@/views/setting/system/org-project/index.vue'),
+                    meta: {
+                        locale: '组织与项目',
+                        roles: ['SYSTEM_ORGANIZATION_PROJECT:READ'],
+                        isTopMenu: true,
+                    },
+                },
+                {
+                    path: 'resourcePool',
+                    name: SettingRouteEnum.SETTING_SYSTEM_RESOURCE_POOL,
+                    component: () => import('/@/views/setting/system/resource-pool/index.vue'),
+                    meta: {
+                        locale: '资源池',
+                        roles: ['SYSTEM_TEST_RESOURCE_POOL:READ'],
+                        isTopMenu: true,
+                    },
+                },
+                {
+                    path: 'taskCenter',
+                    name: SettingRouteEnum.SETTING_SYSTEM_TASK_CENTER,
+                    component: () => import('/@/views/setting/system/task-center/index.vue'),
+                    meta: {
+                        locale: '任务中心',
+                        roles: ['SYSTEM_CASE_TASK_CENTER:READ', 'SYSTEM_SCHEDULE_TASK_CENTER:READ'],
+                        isTopMenu: true,
+                    },
+                },
             ]
         },
         {

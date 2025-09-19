@@ -8,10 +8,8 @@ import cn.master.hub.dto.request.AddProjectRequest;
 import cn.master.hub.dto.request.ProjectRequest;
 import cn.master.hub.dto.request.ProjectSwitchRequest;
 import cn.master.hub.dto.response.ProjectDTO;
-import cn.master.hub.dto.system.ProjectAddMemberBatchRequest;
-import cn.master.hub.dto.system.ProjectResourcePoolDTO;
-import cn.master.hub.dto.system.UpdateProjectRequest;
-import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.*;
+import cn.master.hub.dto.system.request.ProjectMemberRequest;
 import cn.master.hub.entity.*;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
@@ -30,6 +28,7 @@ import cn.master.hub.service.SystemProjectService;
 import cn.master.hub.util.JacksonUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -49,10 +48,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.master.hub.entity.table.ProjectTestResourcePoolTableDef.PROJECT_TEST_RESOURCE_POOL;
+import static cn.master.hub.entity.table.SystemOrganizationTableDef.SYSTEM_ORGANIZATION;
 import static cn.master.hub.entity.table.SystemProjectTableDef.SYSTEM_PROJECT;
 import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
 import static cn.master.hub.entity.table.TestResourcePoolTableDef.TEST_RESOURCE_POOL;
 import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
+import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
 
 /**
  * 项目 服务层实现。
@@ -301,6 +302,55 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
         // 更新安全上下文
         SecurityContextHolder.getContext().setAuthentication(newAuthentication);
         return userDTO;
+    }
+
+    @Override
+    public Page<ProjectDTO> getProjectPage(SystemProjectRequest request) {
+        Page<ProjectDTO> page = QueryChain.of(SystemProject.class)
+                .select(SYSTEM_PROJECT.ALL_COLUMNS, SYSTEM_ORGANIZATION.NAME.as("organizationName"))
+                .from(SYSTEM_PROJECT).innerJoin(SYSTEM_ORGANIZATION).on(SYSTEM_PROJECT.ORGANIZATION_ID.eq(SYSTEM_ORGANIZATION.ID))
+                .where(SYSTEM_PROJECT.ORGANIZATION_ID.eq(request.getOrganizationId()))
+                .and(SYSTEM_PROJECT.NUM.like(request.getKeyword()).or(SYSTEM_PROJECT.NAME.like(request.getKeyword())))
+                .orderBy(SYSTEM_PROJECT.CREATE_TIME.desc())
+                .pageAs(new Page<>(request.getPage(), request.getPageSize()), ProjectDTO.class);
+        return buildUserInfo(page);
+    }
+
+    @Override
+    public Page<UserExtendDTO> getProjectMember(ProjectMemberRequest request) {
+        QueryChain<UserRoleRelation> userRoleRelationQueryChain = QueryChain.of(UserRoleRelation.class)
+                .select(SYSTEM_USER.ID, SYSTEM_USER.NAME, SYSTEM_USER.EMAIL, SYSTEM_USER.PHONE, USER_ROLE_RELATION.ROLE_ID, USER_ROLE_RELATION.CREATE_TIME.as("memberTime"))
+                .from(USER_ROLE_RELATION).leftJoin(SYSTEM_USER).on(USER_ROLE_RELATION.USER_ID.eq(SYSTEM_USER.ID))
+                .where(USER_ROLE_RELATION.SOURCE_ID.eq(request.getProjectId())
+                        .and(SYSTEM_USER.NAME.like(request.getKeyword())
+                                .or(SYSTEM_USER.EMAIL.like(request.getKeyword()))
+                                .or(SYSTEM_USER.PHONE.like(request.getKeyword()))))
+                .orderBy(USER_ROLE_RELATION.CREATE_TIME.desc());
+        Page<UserExtendDTO> page = queryChain()
+                .select("temp.id,temp.name,temp.phone,temp.email, MAX( if (temp.role_id = 'project_admin', true, false)) as adminFlag, MIN(temp.memberTime) as groupTime")
+                .from(userRoleRelationQueryChain).as("temp")
+                .groupBy("temp.id").orderBy("adminFlag desc, groupTime desc")
+                .pageAs(new Page<>(request.getPage(), request.getPageSize()), UserExtendDTO.class);
+        List<UserExtendDTO> memberList = page.getRecords();
+        if (CollectionUtils.isNotEmpty(memberList)) {
+            List<String> userIds = memberList.stream().map(UserExtendDTO::getId).toList();
+            List<UserRoleOptionDTO> userRole = selectProjectUserRoleByUserIds(userIds, request.getProjectId());
+            Map<String, List<UserRoleOptionDTO>> roleMap = userRole.stream().collect(Collectors.groupingBy(UserRoleOptionDTO::getUserId));
+            memberList.forEach(user -> {
+                if (roleMap.containsKey(user.getId())) {
+                    user.setUserRoleList(roleMap.get(user.getId()));
+                }
+            });
+        }
+        return page;
+    }
+
+    private List<UserRoleOptionDTO> selectProjectUserRoleByUserIds(List<String> userIds, String projectId) {
+        return QueryChain.of(UserRoleRelation.class)
+                .select(QueryMethods.distinct(USER_ROLE_RELATION.ROLE_ID.as("id"), USER_ROLE.NAME, USER_ROLE_RELATION.USER_ID))
+                .from(USER_ROLE_RELATION).leftJoin(USER_ROLE).on(USER_ROLE_RELATION.ROLE_ID.eq(USER_ROLE.ID))
+                .where(USER_ROLE_RELATION.USER_ID.in(userIds).and(USER_ROLE_RELATION.SOURCE_ID.eq(projectId)))
+                .listAs(UserRoleOptionDTO.class);
     }
 
     private List<ProjectResourcePoolDTO> getProjectResourcePoolDTOList(List<String> projectIds) {

@@ -24,3 +24,10 @@ export function findNodeByKey<T>(
 
     return null; // 如果在整个树形数组中都没有找到匹配的节点，则返回 null
 }
+export function characterLimit(str?: string, length?: number): string {
+    if (!str) return '';
+    if (str.length <= (length || 20)) {
+        return str;
+    }
+    return `${str.slice(0, length || 20 - 3)}...`;
+}
