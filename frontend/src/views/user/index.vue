@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {usePagination} from "alova/client";
+import {usePagination, useRequest} from "alova/client";
 import {userApis} from "/@/api/modules/user.ts";
-import {onMounted, ref, useTemplateRef, h} from "vue";
+import {h, onMounted, ref, useTemplateRef} from "vue";
 import type {UserState} from "/@/store/modules/user/types.ts";
 import {
   type DataTableColumns,
@@ -9,10 +9,16 @@ import {
   NButton,
   NCard,
   NDataTable,
-  NInput, NFlex,
+  NFlex,
+  NInput,
+  NSwitch,
   type PaginationProps
 } from "naive-ui";
 import EditUser from "/@/views/user/components/EditUser.vue";
+import {cloneDeep} from "es-toolkit";
+import type {UserCreateInfo} from "/@/api/types/user.ts";
+import CreateOrUpdateModal from "/@/views/user/components/CreateOrUpdateModal.vue";
+import type {IBatchActionQueryParams} from "/@/api/types/commons.ts";
 
 const keyword = ref('');
 const {page, pageSize, data, send: loadList} = usePagination((page, pageSize) => userApis.fetchUserPage({
@@ -29,38 +35,44 @@ const {page, pageSize, data, send: loadList} = usePagination((page, pageSize) =>
     }
 )
 const columns: DataTableColumns<UserState> = [
+  {type: 'selection',},
+  {title: '用户名', key: 'name',},
+  {title: '邮箱', key: 'email',},
+  {title: '手机', key: 'phone', width: 140},
+  {title: '组织', key: 'organizationList', width: 300},
+  {title: '用户组', key: 'userRoleList', width: 300},
   {
-    type: 'selection',
-  },
-  {
-    title: '用户名',
-    key: 'name',
-  },
-  {
-    title: '邮箱',
-    key: 'email',
-  },
-  {
-    title: '手机',
-    key: 'phone',
-    width: 140
+    title: '状态', key: 'enable',
+    render(record) {
+      return h(NSwitch, {value: record.enable, size: 'small', onUpdateValue: (v) => handleChangeEnable(v, record)})
+    }
   },
   {
     title: '操作',
     key: 'actions',
     fixed: 'right',
     width: 110,
-    render(row) {
+    render(record) {
       return h(NFlex, {}, {
         default() {
-          return h(NButton, {
-            size: 'small',
-            type: 'primary',
-            text: true,
-            onClick: () => handleEditClick(row)
-          }, {
-            default: () => '编辑'
-          })
+          return [
+            h(NButton, {
+              size: 'small',
+              type: 'primary',
+              text: true,
+              onClick: () => showUserModal('edit', record)
+            }, {
+              default: () => '编辑'
+            }),
+            h(NButton, {
+              size: 'small',
+              type: 'error',
+              text: true,
+              onClick: () => deleteUser(record)
+            }, {
+              default: () => '删除'
+            })
+          ]
         }
       })
     }
@@ -73,18 +85,129 @@ const handleCheck = (rowKeys: DataTableRowKey[]) => {
 const pagination: PaginationProps = {
   page: page.value, pageSize: pageSize.value, size: 'small'
 }
-
+type UserModalMode = 'create' | 'edit';
 const showAddModel = ref(false)
+const visible = ref(false)
 const userFormMode = ref<'create' | 'edit'>('create')
-// const createOrUpdateModalRef = useTemplateRef<InstanceType<typeof CreateOrUpdateModal>>('createOrUpdateModal')
+const createOrUpdateModalRef = useTemplateRef<InstanceType<typeof CreateOrUpdateModal>>('createOrUpdateModal')
 const editUserRef = useTemplateRef<InstanceType<typeof EditUser>>('editUser')
-const userForm = ref<UserState>()
-const handleEditClick = (row: UserState) => {
-  showAddModel.value = true
-  userForm.value = row
-  userForm.value.userGroup = row.userRoleList.map(item => item.id);
-  userFormMode.value = 'edit'
+const userForm1 = ref<UserState>()
+
+interface IUserForm {
+  list: UserCreateInfo[];
+  userGroup: string[];
 }
+
+const defaultUserForm = {
+  list: [
+    {
+      name: '',
+      email: '',
+      phone: '',
+    },
+  ],
+  userGroup: [],
+};
+const userForm = ref<IUserForm>(cloneDeep(defaultUserForm));
+const showUserModal = (mode: UserModalMode, record?: UserState) => {
+  visible.value = true;
+  userFormMode.value = mode;
+  if (mode === 'edit' && record) {
+    userForm.value.list = [
+      {
+        id: record.id,
+        name: record.name,
+        email: record.email,
+        phone: record.phone ? record.phone.replace(/\s/g, '') : record.phone,
+      },
+    ];
+    userForm.value.userGroup = record.userRoleList.map(item => item.id);
+  }
+}
+const deleteUser = (record?: UserState, isBatch?: boolean, params?: IBatchActionQueryParams) => {
+  let selectIds = [record?.id || ''];
+  let title = `确认删除 ${record?.name} 这个用户吗？`;
+  if (isBatch) {
+    selectIds = checkedRowKeys.value as string[];
+    title = `确认删除已选中的 ${params?.currentSelectCount || checkedRowKeys.value.length} 个用户吗？`;
+  }
+  window.$dialog.error({
+    title: title,
+    content: '仅删除用户信息，不处理该用户的系统数据',
+    positiveText: '确认删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      await userApis.deleteUserInfo({
+        selectIds,
+        selectAll: !!params?.selectAll,
+        excludeIds: params?.excludeIds || [],
+        condition: {keyword: keyword.value},
+      })
+      window.$message.success('删除成功');
+      await loadList()
+    },
+  });
+};
+const handleChangeEnable = (value: boolean, record: UserState) => {
+  if (value) {
+    enableUser(record);
+  } else {
+    disabledUser(record);
+  }
+}
+const {send: handleUserStatus} = useRequest((param) => userApis.toggleUserStatus(param), {immediate: false})
+const enableUser = (record: UserState, isBatch?: boolean, params?: IBatchActionQueryParams) => {
+  let title = `确认启用 ${record.name} 这个用户吗？`;
+  let selectIds = [record.id || ''];
+  if (isBatch) {
+    title = `确认启用已选中的 ${params?.currentSelectCount || checkedRowKeys.value.length} 个用户吗？`;
+    selectIds = checkedRowKeys.value as string[];
+  }
+  window.$dialog.info({
+    title: title,
+    content: '启用后用户可以登录系统',
+    positiveText: '确认启用',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      handleUserStatus({
+        selectIds,
+        selectAll: !!params?.selectAll,
+        excludeIds: params?.excludeIds || [],
+        condition: {keyword: keyword.value},
+        enable: true,
+      }).then(() => {
+        window.$message.success('启用成功');
+        loadList();
+      })
+    },
+  });
+}
+const disabledUser = (record: UserState, isBatch?: boolean, params?: IBatchActionQueryParams) => {
+  let title = `确认禁用 ${record.name} 这个用户吗？`;
+  let selectIds = [record.id || ''];
+  if (isBatch) {
+    title = `确认禁用已选中的 ${params?.currentSelectCount || checkedRowKeys.value.length} 个用户吗？`;
+    selectIds = checkedRowKeys.value as string[];
+  }
+  window.$dialog.error({
+    title: title,
+    content: '禁用的用户无法登录系统',
+    positiveText: '确认禁用',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      handleUserStatus({
+        selectIds,
+        selectAll: !!params?.selectAll,
+        excludeIds: params?.excludeIds || [],
+        condition: {keyword: keyword.value},
+        enable: false,
+      }).then(() => {
+        window.$message.success('禁用成功');
+        loadList();
+      })
+    },
+  })
+};
 onMounted(() => {
   loadList()
 })
@@ -93,7 +216,9 @@ onMounted(() => {
 <template>
   <n-card>
     <template #header>
-      <n-button type="primary" size="small" @click="showAddModel = true"> 创建用户</n-button>
+      <!--      <n-button type="primary" size="small" @click="showAddModel = true"> 创建用户</n-button>-->
+      <n-button type="primary" size="small" class="ml-2" @click="showUserModal('create')"> 创建用户</n-button>
+      <n-button size="small" class="ml-2" disabled> 导入用户</n-button>
     </template>
     <template #header-extra>
       <n-input class="w-[240px]" clearable v-model:value="keyword" placeholder="通过 ID/名称搜索"/>
@@ -106,8 +231,10 @@ onMounted(() => {
         @update:checked-row-keys="handleCheck"
     />
   </n-card>
-  <!--  <create-or-update-modal ref="createOrUpdateModalRef" v-model:show-modal="showAddModel"/>-->
-  <edit-user ref="editUserRef" v-model:show-modal="showAddModel" v-model:user-form="userForm"
+  <create-or-update-modal ref="createOrUpdateModalRef" v-model:show-modal="visible"
+                          v-model:user-form="userForm"
+                          :user-form-mode="userFormMode" @submit="loadList()"/>
+  <edit-user ref="editUserRef" v-model:show-modal="showAddModel" v-model:user-form="userForm1"
              :user-form-mode="userFormMode" @submit="loadList()"/>
 </template>
 

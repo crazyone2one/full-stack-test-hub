@@ -51,6 +51,9 @@ const emit = defineEmits<{
     {{tagsTooltip}}
   </n-tooltip>
 </div>
+  <div v-else :class="`tag-group-class ${props.allowEdit ? 'min-h-[24px] cursor-pointer' : ''}`" @click="emit('click')">
+    -
+  </div>
 </template>
 
 <style scoped>

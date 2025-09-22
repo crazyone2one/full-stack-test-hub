@@ -15,6 +15,7 @@ export interface UserState {
     name: string;
     email: string;
     phone: string;
+    enable?: boolean;
     lastOrganizationId?: string;
     lastProjectId?: string;
     avatar?: string;

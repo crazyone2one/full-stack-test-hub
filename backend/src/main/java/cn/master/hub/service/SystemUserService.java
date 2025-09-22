@@ -6,7 +6,10 @@ import cn.master.hub.dto.request.UserBatchCreateRequest;
 import cn.master.hub.dto.request.UserEditRequest;
 import cn.master.hub.dto.response.UserBatchCreateResponse;
 import cn.master.hub.dto.response.UserTableResponse;
+import cn.master.hub.dto.system.TableBatchProcessDTO;
+import cn.master.hub.dto.system.TableBatchProcessResponse;
 import cn.master.hub.dto.system.UserSelectOption;
+import cn.master.hub.dto.system.request.UserChangeEnableRequest;
 import cn.master.hub.entity.SystemUser;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
@@ -34,4 +37,8 @@ public interface SystemUserService extends IService<SystemUser> {
     List<UserSelectOption> getGlobalSystemRoleList();
 
     UserEditRequest updateUser(UserEditRequest request, String operator);
+
+    TableBatchProcessResponse deleteUser(TableBatchProcessDTO request, String currentUserName, String username);
+
+    TableBatchProcessResponse updateUserEnable(UserChangeEnableRequest request, String currentUserName, String username);
 }

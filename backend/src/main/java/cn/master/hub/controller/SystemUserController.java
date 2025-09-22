@@ -3,13 +3,21 @@ package cn.master.hub.controller;
 import cn.master.hub.constants.UserSource;
 import cn.master.hub.dto.UserCreateInfo;
 import cn.master.hub.dto.request.BasePageRequest;
+import cn.master.hub.dto.request.UserBatchCreateRequest;
 import cn.master.hub.dto.request.UserEditRequest;
+import cn.master.hub.dto.response.UserBatchCreateResponse;
 import cn.master.hub.dto.response.UserTableResponse;
+import cn.master.hub.dto.system.TableBatchProcessDTO;
+import cn.master.hub.dto.system.TableBatchProcessResponse;
 import cn.master.hub.dto.system.UserSelectOption;
+import cn.master.hub.dto.system.request.UserChangeEnableRequest;
 import cn.master.hub.entity.SystemUser;
+import cn.master.hub.handler.log.OperationLogType;
+import cn.master.hub.handler.log.annotation.Log;
 import cn.master.hub.handler.validation.Created;
 import cn.master.hub.handler.validation.Updated;
 import cn.master.hub.service.SystemUserService;
+import cn.master.hub.service.log.UserLogService;
 import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,6 +55,12 @@ public class SystemUserController {
         return systemUserService.addUser(userCreateDTO, UserSource.LOCAL.name(), SessionUtils.getCurrentUserName());
     }
 
+    @PostMapping("/add")
+    @Operation(summary = "系统设置-系统-用户-添加用户")
+    public UserBatchCreateResponse addUser(@Validated({Created.class}) @RequestBody UserBatchCreateRequest userCreateDTO) {
+        return systemUserService.addUser(userCreateDTO, UserSource.LOCAL.name(), SessionUtils.getCurrentUserName());
+    }
+
     /**
      * 根据主键删除用户。
      *
@@ -59,6 +73,13 @@ public class SystemUserController {
         return systemUserService.removeById(id);
     }
 
+    @PostMapping("/delete")
+    @Operation(summary = "系统设置-系统-用户-删除用户")
+    @Log(type = OperationLogType.DELETE, expression = "#msClass.deleteLog(#request)", msClass = UserLogService.class)
+    public TableBatchProcessResponse deleteUser(@Validated @RequestBody TableBatchProcessDTO request) {
+        return systemUserService.deleteUser(request, SessionUtils.getCurrentUserName(), SessionUtils.getCurrentUser().getUsername());
+    }
+
     /**
      * 根据主键更新用户。
      *
@@ -69,6 +90,13 @@ public class SystemUserController {
     @Operation(description = "系统设置-系统-用户-修改用户")
     public UserEditRequest update(@Validated({Updated.class}) @RequestBody UserEditRequest request) {
         return systemUserService.updateUser(request, SessionUtils.getCurrentUserName());
+    }
+
+    @PostMapping("/update/enable")
+    @Operation(summary = "系统设置-系统-用户-启用/禁用用户")
+    @Log(type = OperationLogType.UPDATE, expression = "#msClass.batchUpdateEnableLog(#request)", msClass = UserLogService.class)
+    public TableBatchProcessResponse updateUserEnable(@Validated @RequestBody UserChangeEnableRequest request) {
+        return systemUserService.updateUserEnable(request, SessionUtils.getCurrentUserName(), SessionUtils.getCurrentUser().getUsername());
     }
 
     /**

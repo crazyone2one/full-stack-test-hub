@@ -27,4 +27,6 @@ public interface BaseUserRoleRelationService extends IService<UserRoleRelation> 
     void updateUserSystemGlobalRole(@Valid SystemUser user, @Valid @NotEmpty String operator, @Valid @NotEmpty List<String> roleList);
 
     Map<String, UserTableResponse> selectGlobalUserRoleAndOrganization(List<String> userIdList);
+
+    void deleteByUserIdList(List<String> userIdList);
 }

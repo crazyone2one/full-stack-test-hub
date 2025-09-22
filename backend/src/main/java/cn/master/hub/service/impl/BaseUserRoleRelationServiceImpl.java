@@ -154,6 +154,11 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
         return returnMap;
     }
 
+    @Override
+    public void deleteByUserIdList(List<String> userIdList) {
+        mapper.deleteByQuery(queryChain().where(USER_ROLE_RELATION.USER_ID.in(userIdList)));
+    }
+
     private List<UserRoleRelation> selectGlobalRoleByUserId(String userId) {
         List<String> userRoleIds = QueryChain.of(UserRole.class).select(USER_ROLE.ID)
                 .from(USER_ROLE).where(USER_ROLE.TYPE.eq("SYSTEM")

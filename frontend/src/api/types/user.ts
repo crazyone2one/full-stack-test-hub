@@ -1,9 +1,11 @@
+import type {BatchApiParams} from "/@/api/types/commons.ts";
+
 export interface UserCreateInfo {
     id?: string;
     name: string;
     email: string;
     phone: string;
-    userRoleIdList?: string[];
+    [key: string]: any;
 }
 
 export interface ISystemRole {
@@ -13,9 +15,14 @@ export interface ISystemRole {
     closeable: boolean; // 是否可取消
 }
 
-export interface UserBatchCreate {
+export interface ICreateUserParams {
     userInfoList: UserCreateInfo[];
     userRoleIdList: string[];
+}
+
+export interface ICreateUserResult {
+    errorEmails: Record<string, any>;
+    successList: any[];
 }
 
 // 用户所属组织模型
@@ -66,4 +73,26 @@ export interface IUserItem {
     userRoleList: IUserRoleListItem[]; // 用户所属用户组
     userRoles?: IUserRoleListItem[]; // 用户所属用户组
     selectUserGroupVisible?: boolean;
+}
+
+export interface SimpleUserInfo {
+    id?: string;
+    name: string;
+    email: string;
+    phone?: string;
+
+    [key: string]: any;
+}
+export interface UpdateUserInfoParams extends SimpleUserInfo {
+    id: string;
+    userRoleIdList: string[];
+}
+export interface IUserForm {
+    list: SimpleUserInfo[];
+    userGroup: Record<string, any>[];
+}
+
+export type DeleteUserParams = BatchApiParams;
+export interface IUpdateUserStatusParams extends BatchApiParams {
+    enable: boolean;
 }
