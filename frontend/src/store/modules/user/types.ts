@@ -22,7 +22,7 @@ export interface UserState {
     userRolePermissions: UserRolePermissions[];
     userRoles?: UserRole[];
     userRoleRelations?: UserRoleRelation[];
-    userRoleList: UserRoleListItem[]; // 用户所属用户组
+    userRoleList?: UserRoleListItem[]; // 用户所属用户组
     userGroup?: string[]
 }
 
