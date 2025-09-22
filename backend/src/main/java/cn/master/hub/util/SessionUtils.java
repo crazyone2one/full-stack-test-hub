@@ -59,9 +59,11 @@ public class SessionUtils {
             HttpServletRequest request = ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
             log.debug("ORGANIZATION: {}", request.getHeader("ORGANIZATION"));
             if (request.getHeader("ORGANIZATION") != null) {
+                setCurrentOrganizationId(request.getHeader("ORGANIZATION"));
                 return request.getHeader("ORGANIZATION");
             }
         } catch (Exception e) {
+            clearCurrentOrganizationId();
             log.error(e.getMessage(), e);
         }
         return Objects.requireNonNull(getCurrentUser()).getUserOrganizationId();
@@ -75,9 +77,11 @@ public class SessionUtils {
             HttpServletRequest request = ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
             log.debug("PROJECT: {}", request.getHeader("PROJECT"));
             if (request.getHeader("PROJECT") != null) {
+                setCurrentProjectId(request.getHeader("PROJECT"));
                 return request.getHeader("PROJECT");
             }
         } catch (Exception e) {
+            clearCurrentProjectId();
             log.error(e.getMessage(), e);
         }
         return Objects.requireNonNull(getCurrentUser()).getUserProjectId();

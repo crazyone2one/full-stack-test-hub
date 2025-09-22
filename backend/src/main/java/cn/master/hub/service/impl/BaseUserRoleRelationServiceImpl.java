@@ -18,6 +18,7 @@ import cn.master.hub.mapper.UserRoleRelationMapper;
 import cn.master.hub.service.BaseUserRoleRelationService;
 import cn.master.hub.service.OperationLogService;
 import cn.master.hub.util.JacksonUtils;
+import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.validation.Valid;
@@ -91,7 +92,7 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
                 userRoleRelation.setRoleId(roleId);
                 userRoleRelation.setSourceId(UserRoleScope.SYSTEM);
                 userRoleRelation.setCreateUser(operator);
-                userRoleRelation.setOrganizationId(UserRoleScope.SYSTEM);
+                userRoleRelation.setOrganizationId(SessionUtils.getCurrentOrganizationId());
                 saveList.add(userRoleRelation);
             }
         }
@@ -146,7 +147,7 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
             if (userRole != null && Strings.CS.equals(userRole.getType(), UserRoleScope.SYSTEM)) {
                 userInfo.setUserRole(userRole);
             }
-            SystemOrganization organization = organizationMap.get(userRoleRelation.getSourceId());
+            SystemOrganization organization = organizationMap.get(userRoleRelation.getOrganizationId());
             if (organization != null && !userInfo.getOrganizationList().contains(organization)) {
                 userInfo.setOrganization(organization);
             }

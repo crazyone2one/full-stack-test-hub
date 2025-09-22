@@ -1,18 +1,18 @@
 package cn.master.hub.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.Table;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-import java.io.Serial;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 用户 实体类。
@@ -54,6 +54,7 @@ public class SystemUser implements Serializable {
      * 用户密码
      */
     @Schema(description = "用户密码")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     /**

@@ -173,7 +173,7 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
 
     @Override
     public UserEditRequest updateUser(UserEditRequest request, String operator) {
-        globalUserRoleService.checkRoleIsGlobalAndHaveMember(request.getUserRoleIdList(), true);
+//        globalUserRoleService.checkRoleIsGlobalAndHaveMember(request.getUserRoleIdList(), true);
         checkUserEmail(request.getId(), request.getEmail());
         SystemUser user = new SystemUser();
         BeanUtils.copyProperties(request, user);
