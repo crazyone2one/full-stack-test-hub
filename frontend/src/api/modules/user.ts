@@ -27,6 +27,7 @@ export const userApis = {
     updateUser: (data: UpdateUserInfoParams) => put("/system/user/update", data),
     createUser: (data: UserCreateInfo) => post("/system/user/save", data),
     batchCreateUser: (data: ICreateUserParams) => post<ICreateUserResult>("/system/user/add", data),
+    // 删除用户
     deleteUserInfo: (data: DeleteUserParams) => post("/system/user/delete", data),
     toggleUserStatus: (data: IUpdateUserStatusParams) => post("/system/user/update/enable", data),
     // 批量添加用户到多个用户组
@@ -40,4 +41,6 @@ export const userApis = {
     getSystemProjects: () => get<Array<ITransferOption>>("/system/user/get/project"),
     // 获取系统组织组
     getSystemOrgs: () => get<Array<ITransferOption>>("/system/user/get/organization"),
+    // 重置用户密码
+    resetUserPassword: (data: DeleteUserParams) => post("/system/user/reset/password", data),
 };

@@ -70,9 +70,12 @@ export interface IUserItem {
     createUser: string;
     updateUser: string;
     organizationList: IOrganizationListItem[]; // 用户所属组织
+    organizationIds: string[]; // 用户所属组织
     userRoleList: IUserRoleListItem[]; // 用户所属用户组
+    userRoleIds: string[]; // 用户所属用户组
     userRoles?: IUserRoleListItem[]; // 用户所属用户组
     selectUserGroupVisible?: boolean;
+    selectUserGroupLoading?: boolean;
 }
 
 export interface SimpleUserInfo {

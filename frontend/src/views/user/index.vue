@@ -6,17 +6,20 @@ import type {UserState} from "/@/store/modules/user/types.ts";
 import {
   type DataTableColumns,
   type DataTableRowKey,
+  type DropdownOption,
   NButton,
   NCard,
   NDataTable,
+  NDropdown,
   NFlex,
   NInput,
+  NSelect,
   NSwitch,
   type PaginationProps
 } from "naive-ui";
 import EditUser from "/@/views/user/components/EditUser.vue";
 import {cloneDeep} from "es-toolkit";
-import type {IUserItem, UserCreateInfo} from "/@/api/types/user.ts";
+import type {ISystemRole, IUserItem, UserCreateInfo} from "/@/api/types/user.ts";
 import CreateOrUpdateModal from "/@/views/user/components/CreateOrUpdateModal.vue";
 import type {IBatchActionQueryParams} from "/@/api/types/commons.ts";
 import BatchModal from "/@/views/user/components/BatchModal.vue";
@@ -38,7 +41,23 @@ const {page, pageSize, data, send: loadList} = usePagination((page, pageSize) =>
       watchingStates: [keyword]
     }
 )
+const userGroupOptions = ref<ISystemRole[]>([]);
 const checkedRowKeys = ref<string[]>([])
+const tableMoreAction: Array<DropdownOption> = [
+  {
+    label: '重置密码',
+    key: 'resetPassword'
+  },
+  {
+    type: 'divider',
+    key: 'd1'
+  },
+  {
+    label: '删除',
+    key: 'delete',
+    props: {style: 'color: red;'}
+  },
+]
 const columns: DataTableColumns<IUserItem> = [
   {
     type: 'selection',
@@ -81,7 +100,23 @@ const columns: DataTableColumns<IUserItem> = [
     title: '用户组', key: 'userRoleList', width: 300,
     render(record) {
       if (!record.selectUserGroupVisible) {
-        return h(TagGroup, {tagList: record.userRoleList,showTable: true})
+        return h(TagGroup, {
+          tagList: record.userRoleList,
+          showTable: true,
+        });
+      } else {
+        return h(NSelect, {
+          options: userGroupOptions.value,
+          labelField: 'name',
+          valueField: 'id',
+          disabled: record.selectUserGroupLoading,
+          class: "w-full max-w-[300px]",
+          multiple: true,
+          placeholder: '请选择用户组',
+          value: record.userRoleIds,
+          size: 'small',
+          onUpdateShow: (v) => handleUserGroupChange(v, record)
+        })
       }
     }
   },
@@ -109,13 +144,13 @@ const columns: DataTableColumns<IUserItem> = [
               }, {
                 default: () => '编辑'
               }),
-              h(NButton, {
+              h(NDropdown, {
+                options: tableMoreAction,
                 size: 'small',
-                type: 'error',
-                text: true,
-                onClick: () => deleteUser(record)
+                trigger: 'click',
+                onSelect: (v) => handleSelect(v, record)
               }, {
-                default: () => '删除'
+                default: () => h("div", {class: 'i-mdi:dots-horizontal-circle-outline text-[16px]'})
               })
             ]
           }
@@ -264,8 +299,60 @@ const disabledUser = (record: IUserItem, isBatch?: boolean, params?: IBatchActio
     },
   })
 };
+const initUGOptions = async () => {
+  userGroupOptions.value = await userApis.getSystemRoles();
+  if (userGroupOptions.value.length) {
+    userForm.value.userGroup = userGroupOptions.value.filter(e => e.selected).map(item => item.id) as string[];
+  }
+}
+const handleUserGroupChange = (value: boolean, record: IUserItem) => {
+  console.log(value)
+  console.log(record)
+}
+const resetPassword = (record?: IUserItem, isBatch?: boolean, params?: IBatchActionQueryParams) => {
+  let title = `是否将 ${record?.name} 的密码重置为初始密码？`;
+  let selectIds = [record?.id || ''];
+  if (isBatch) {
+    title = `是否将选中的 ${params?.currentSelectCount || checkedRowKeys.value.length} 个用户的密码重置为初始密码？`
+    selectIds = checkedRowKeys.value;
+  }
+
+  let content = '初始的密码为用户邮箱，下次登录时生效';
+  if (record && record.name === 'admin') {
+    content = '初始的密码为 Password，下次登录时生效';
+  }
+  window.$dialog.warning({
+    title,
+    content,
+    positiveText: '确认重置',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      const param = {
+        selectIds,
+        selectAll: !!params?.selectAll,
+        excludeIds: params?.excludeIds || [],
+        condition: {keyword: keyword.value},
+      }
+      await userApis.resetUserPassword(param);
+      window.$message.success('重置成功');
+    },
+  })
+}
+const handleSelect = (key: string, record: IUserItem) => {
+  switch (key) {
+    case 'resetPassword':
+      resetPassword(record);
+      break
+    case 'delete':
+      deleteUser(record);
+      break;
+    default:
+      break;
+  }
+}
 onMounted(() => {
   loadList()
+  initUGOptions()
 })
 </script>
 

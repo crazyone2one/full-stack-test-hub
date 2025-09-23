@@ -13,10 +13,7 @@ import cn.master.hub.dto.system.UserSelectOption;
 import cn.master.hub.dto.system.request.OrganizationMemberBatchRequest;
 import cn.master.hub.dto.system.request.UserChangeEnableRequest;
 import cn.master.hub.dto.system.request.UserRoleBatchRelationRequest;
-import cn.master.hub.entity.SystemProject;
-import cn.master.hub.entity.SystemUser;
-import cn.master.hub.entity.UserRole;
-import cn.master.hub.entity.UserRoleRelation;
+import cn.master.hub.entity.*;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.result.ResultCode;
@@ -85,7 +82,9 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
                 UserTableResponse roleOrgModel = roleAndOrganizationMap.get(user.getId());
                 if (roleOrgModel != null) {
                     user.setUserRoleList(roleOrgModel.getUserRoleList());
+                    user.setUserRoleIds(roleOrgModel.getUserRoleList().stream().map(UserRole::getId).toList());
                     user.setOrganizationList(roleOrgModel.getOrganizationList());
+                    user.setOrganizationIds(roleOrgModel.getOrganizationList().stream().map(SystemOrganization::getId).toList());
                 }
             }
         }
@@ -235,6 +234,25 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
         organizationService.addMemberBySystem(request, SessionUtils.getCurrentUserName());
         userLogService.batchAddOrgLog(userRoleBatchRelationRequest, SessionUtils.getCurrentUserName());
         return new TableBatchProcessResponse(userRoleBatchRelationRequest.getSelectIds().size(), userRoleBatchRelationRequest.getSelectIds().size());
+    }
+
+    @Override
+    public TableBatchProcessResponse resetPassword(TableBatchProcessDTO request, String operator) {
+        request.setSelectIds(userToolService.getBatchUserIds(request));
+        checkUserInDb(request.getSelectIds());
+        List<SystemUser> userList = mapper.selectListByIds(request.getSelectIds());
+        for (SystemUser user : userList) {
+            String password = passwordEncoder.encode(user.getEmail());
+            if ("admin".equals(user.getName())) {
+                password = passwordEncoder.encode("Password");
+            }
+            updateChain().set(SystemUser::getPassword, password).set(SystemUser::getUpdateUser, operator)
+                    .where(SystemUser::getId).eq(user.getId()).update();
+        }
+        TableBatchProcessResponse response = new TableBatchProcessResponse();
+        response.setTotalCount(request.getSelectIds().size());
+        response.setSuccessCount(request.getSelectIds().size());
+        return response;
     }
 
     private void checkProcessUserAndThrowException(List<String> userIdList, String operatorId, String operatorName, String exceptionMessage) {

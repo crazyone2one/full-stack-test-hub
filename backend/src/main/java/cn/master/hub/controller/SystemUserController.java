@@ -201,4 +201,11 @@ public class SystemUserController {
         userLogService.batchAddProjectLog(userRoleBatchRelationRequest, SessionUtils.getCurrentUserName());
         return new TableBatchProcessResponse(userRoleBatchRelationRequest.getSelectIds().size(), userRoleBatchRelationRequest.getSelectIds().size());
     }
+    @PostMapping("/reset/password")
+    @Operation(summary = "系统设置-系统-用户-重置用户密码")
+    @Log(type = OperationLogType.UPDATE, expression = "#msClass.resetPasswordLog(#request)", msClass = UserLogService.class)
+    public TableBatchProcessResponse resetPassword(@Validated @RequestBody TableBatchProcessDTO request) {
+        return systemUserService.resetPassword(request, SessionUtils.getCurrentUserName());
+    }
+
 }

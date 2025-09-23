@@ -44,4 +44,6 @@ public interface SystemUserService extends IService<SystemUser> {
     TableBatchProcessResponse updateUserEnable(UserChangeEnableRequest request, String currentUserName, String username);
 
     TableBatchProcessResponse addMemberToOrg(UserRoleBatchRelationRequest userRoleBatchRelationRequest);
+
+    TableBatchProcessResponse resetPassword(TableBatchProcessDTO request, String operator);
 }
