@@ -13,7 +13,6 @@ import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.handler.log.OperationLogType;
-import cn.master.hub.mapper.UserRoleMapper;
 import cn.master.hub.mapper.UserRoleRelationMapper;
 import cn.master.hub.service.BaseUserRoleRelationService;
 import cn.master.hub.service.OperationLogService;
@@ -27,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import static cn.master.hub.constants.InternalUserRole.ADMIN;
 import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
+import static cn.master.hub.handler.result.CommonResultCode.USER_ROLE_RELATION_EXIST;
 import static cn.master.hub.handler.result.CommonResultCode.USER_ROLE_RELATION_REMOVE_ADMIN_USER_PERMISSION;
 
 /**
@@ -46,11 +47,11 @@ import static cn.master.hub.handler.result.CommonResultCode.USER_ROLE_RELATION_R
  * @author 11's papa
  * @since 2025-09-09
  */
-@Service
+@Primary
+@Service("baseUserRoleRelationService")
 @RequiredArgsConstructor
 public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelationMapper, UserRoleRelation> implements BaseUserRoleRelationService {
     private final OperationLogService operationLogService;
-    private final UserRoleMapper userRoleMapper;
 
     @Override
     public void deleteByRoleId(String roleId) {
@@ -147,7 +148,7 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
             if (userRole != null && Strings.CS.equals(userRole.getType(), UserRoleScope.SYSTEM)) {
                 userInfo.setUserRole(userRole);
             }
-            SystemOrganization organization = organizationMap.get(userRoleRelation.getOrganizationId());
+            SystemOrganization organization = organizationMap.get(userRoleRelation.getSourceId());
             if (organization != null && !userInfo.getOrganizationList().contains(organization)) {
                 userInfo.setOrganization(organization);
             }
@@ -158,6 +159,17 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
     @Override
     public void deleteByUserIdList(List<String> userIdList) {
         mapper.deleteByQuery(queryChain().where(USER_ROLE_RELATION.USER_ID.in(userIdList)));
+    }
+
+    @Override
+    public void checkExist(UserRoleRelation userRoleRelation) {
+        boolean exists = queryChain()
+                .where(USER_ROLE_RELATION.USER_ID.eq(userRoleRelation.getUserId())
+                        .and(USER_ROLE_RELATION.ROLE_ID.eq(userRoleRelation.getRoleId())))
+                .exists();
+        if (exists) {
+            throw new CustomException(USER_ROLE_RELATION_EXIST);
+        }
     }
 
     private List<UserRoleRelation> selectGlobalRoleByUserId(String userId) {

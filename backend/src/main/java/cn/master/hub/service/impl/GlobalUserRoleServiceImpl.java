@@ -1,6 +1,7 @@
 package cn.master.hub.service.impl;
 
 import cn.master.hub.constants.UserRoleScope;
+import cn.master.hub.constants.UserRoleType;
 import cn.master.hub.dto.PermissionDefinitionItem;
 import cn.master.hub.dto.request.PermissionSettingUpdateRequest;
 import cn.master.hub.entity.UserRole;
@@ -10,21 +11,22 @@ import cn.master.hub.handler.exception.CustomException;
 import cn.master.hub.service.BaseUserRolePermissionService;
 import cn.master.hub.service.BaseUserRoleRelationService;
 import cn.master.hub.service.GlobalUserRoleService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static cn.master.hub.constants.InternalUserRole.MEMBER;
 import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
-import static cn.master.hub.handler.result.ResultCode.GLOBAL_USER_ROLE_EXIST;
-import static cn.master.hub.handler.result.ResultCode.GLOBAL_USER_ROLE_PERMISSION;
+import static cn.master.hub.handler.result.ResultCode.*;
 
 /**
  * @author Created by 11's papa on 2025/9/12
  */
-@Service
+@Service("globalUserRoleService")
 public class GlobalUserRoleServiceImpl extends BaseUserRoleServiceImpl implements GlobalUserRoleService {
 
 
@@ -80,6 +82,22 @@ public class GlobalUserRoleServiceImpl extends BaseUserRoleServiceImpl implement
         UserRole userRole = getWithCheck(id);
         checkGlobalUserRole(userRole);
         super.delete(userRole, MEMBER.getValue(), currentUserId, UserRoleScope.SYSTEM);
+    }
+
+    @Override
+    public List<UserRole> getList(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return new ArrayList<>();
+        } else {
+            return mapper.selectListByIds(idList);
+        }
+    }
+
+    @Override
+    public void checkSystemUserGroup(UserRole userRole) {
+        if (!Strings.CS.equals(userRole.getType(), UserRoleType.SYSTEM.name())) {
+            throw new CustomException(GLOBAL_USER_ROLE_RELATION_SYSTEM_PERMISSION);
+        }
     }
 
     private void checkExist(UserRole userRole) {

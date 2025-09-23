@@ -7,6 +7,7 @@ import cn.master.hub.dto.system.OrganizationProjectRequest;
 import cn.master.hub.dto.system.UserExtendDTO;
 import cn.master.hub.dto.system.request.*;
 import cn.master.hub.entity.SystemOrganization;
+import cn.master.hub.entity.SystemProject;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
 
@@ -32,6 +33,7 @@ public interface SystemOrganizationService extends IService<SystemOrganization> 
 
     void addMemberBySystem(OrganizationMemberRequest request, String currentUserName);
 
+    void addMemberBySystem(OrganizationMemberBatchRequest batchRequest, String createUserId);
     void addMemberByOrg(OrganizationMemberExtendRequest organizationMemberExtendRequest, String createUserId);
 
     void removeMember(String organizationId, String userId, String currentUserName);
@@ -47,4 +49,6 @@ public interface SystemOrganizationService extends IService<SystemOrganization> 
     Page<UserExtendDTO> getMemberList(MemberRequest request);
 
     List<UserExtendDTO> getMemberOption(String sourceId, String keyword);
+
+    Map<SystemOrganization, List<SystemProject>> getOrgProjectMap();
 }

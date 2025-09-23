@@ -25,4 +25,8 @@ public interface GlobalUserRoleService extends BaseUserRoleService {
     void checkGlobalUserRole(UserRole userRole);
 
     void delete(String id, String currentUserId);
+
+    List<UserRole> getList(List<String> checkIdList);
+
+    void checkSystemUserGroup(UserRole userRole);
 }

@@ -96,3 +96,6 @@ export type DeleteUserParams = BatchApiParams;
 export interface IUpdateUserStatusParams extends BatchApiParams {
     enable: boolean;
 }
+export interface BatchAddParams extends BatchApiParams {
+    roleIds: string[]; // 用户组/项目/组织 id 集合
+}

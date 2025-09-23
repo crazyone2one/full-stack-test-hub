@@ -4,6 +4,7 @@ import cn.master.hub.constants.HttpMethodConstants;
 import cn.master.hub.constants.InternalUserRole;
 import cn.master.hub.constants.OperationLogConstants;
 import cn.master.hub.dto.request.ProjectAddMemberRequest;
+import cn.master.hub.dto.system.ProjectAddMemberBatchRequest;
 import cn.master.hub.entity.SystemProject;
 import cn.master.hub.entity.SystemUser;
 import cn.master.hub.entity.UserRoleRelation;
@@ -150,5 +151,37 @@ public class CommonProjectService {
                 });
         operationLogService.batchAdd(logDTOList);
         return userRoleRelationMapper.deleteByQuery(userRoleRelationQueryChain);
+    }
+
+    public void addProjectMember(ProjectAddMemberBatchRequest request, String createUser, String path, String type, String content, String module) {
+        List<LogDTO> logDTOList = new ArrayList<>();
+        List<UserRoleRelation> userRoleRelations = new ArrayList<>();
+        request.getProjectIds().forEach(projectId -> {
+            SystemProject project = projectMapper.selectOneById(projectId);
+            Map<String, String> userMap = addUserPre(request.getUserIds(), createUser, path, module, projectId, project);
+            request.getUserIds().forEach(userId -> {
+                QueryChain<UserRoleRelation> userRoleRelationQueryChain = QueryChain.of(UserRoleRelation.class)
+                        .where(USER_ROLE_RELATION.SOURCE_ID.eq(projectId).and(USER_ROLE_RELATION.USER_ID.eq(userId)));
+                if (userRoleRelationMapper.selectListByQuery(userRoleRelationQueryChain).isEmpty()) {
+                    UserRoleRelation memberRole = new UserRoleRelation();
+                    memberRole.setUserId(userId);
+                    memberRole.setRoleId(InternalUserRole.PROJECT_MEMBER.getValue());
+                    memberRole.setSourceId(projectId);
+                    memberRole.setCreateUser(createUser);
+                    memberRole.setOrganizationId(project.getOrganizationId());
+                    userRoleRelations.add(memberRole);
+                    String logProjectId = OperationLogConstants.SYSTEM;
+                    if (Strings.CS.equals(module, OperationLogModule.SETTING_ORGANIZATION_PROJECT)) {
+                        logProjectId = OperationLogConstants.ORGANIZATION;
+                    }
+                    LogDTO logDTO = new LogDTO(logProjectId, OperationLogConstants.SYSTEM, memberRole.getId(), createUser, type, module, content + Translator.get("project_member") + ": " + userMap.get(userId));
+                    setLog(logDTO, path, HttpMethodConstants.POST.name(), logDTOList);
+                }
+            });
+        });
+        if (CollectionUtils.isNotEmpty(userRoleRelations)) {
+            userRoleRelationMapper.insertBatch(userRoleRelations);
+        }
+        operationLogService.batchAdd(logDTOList);
     }
 }

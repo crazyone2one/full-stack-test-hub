@@ -10,7 +10,9 @@ import cn.master.hub.dto.response.UserTableResponse;
 import cn.master.hub.dto.system.TableBatchProcessDTO;
 import cn.master.hub.dto.system.TableBatchProcessResponse;
 import cn.master.hub.dto.system.UserSelectOption;
+import cn.master.hub.dto.system.request.OrganizationMemberBatchRequest;
 import cn.master.hub.dto.system.request.UserChangeEnableRequest;
+import cn.master.hub.dto.system.request.UserRoleBatchRelationRequest;
 import cn.master.hub.entity.SystemProject;
 import cn.master.hub.entity.SystemUser;
 import cn.master.hub.entity.UserRole;
@@ -22,14 +24,15 @@ import cn.master.hub.mapper.SystemUserMapper;
 import cn.master.hub.service.*;
 import cn.master.hub.service.log.UserLogService;
 import cn.master.hub.util.JacksonUtils;
+import cn.master.hub.util.SessionUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,14 +52,23 @@ import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
  * @since 2025-08-29
  */
 @Service
-@RequiredArgsConstructor
 public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemUser> implements SystemUserService {
     private final OperationLogService operationLogService;
     private final UserLogService userLogService;
     private final PasswordEncoder passwordEncoder;
-    private final GlobalUserRoleService globalUserRoleService;
     private final BaseUserRoleRelationService userRoleRelationService;
     private final UserToolService userToolService;
+    private final SystemOrganizationService organizationService;
+
+    public SystemUserServiceImpl(OperationLogService operationLogService, UserLogService userLogService, PasswordEncoder passwordEncoder,
+                                 @Qualifier("baseUserRoleRelationService") BaseUserRoleRelationService userRoleRelationService, UserToolService userToolService, SystemOrganizationService organizationService) {
+        this.operationLogService = operationLogService;
+        this.userLogService = userLogService;
+        this.passwordEncoder = passwordEncoder;
+        this.userRoleRelationService = userRoleRelationService;
+        this.userToolService = userToolService;
+        this.organizationService = organizationService;
+    }
 
     @Override
     public Page<UserTableResponse> getUserPage(BasePageRequest request) {
@@ -211,6 +223,18 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
         response.setTotalCount(request.getSelectIds().size());
         response.setSuccessCount(request.getSelectIds().size());
         return response;
+    }
+
+    @Override
+    public TableBatchProcessResponse addMemberToOrg(UserRoleBatchRelationRequest userRoleBatchRelationRequest) {
+        //获取本次处理的用户
+        userRoleBatchRelationRequest.setSelectIds(userToolService.getBatchUserIds(userRoleBatchRelationRequest));
+        OrganizationMemberBatchRequest request = new OrganizationMemberBatchRequest();
+        request.setOrganizationIds(userRoleBatchRelationRequest.getRoleIds());
+        request.setUserIds(userRoleBatchRelationRequest.getSelectIds());
+        organizationService.addMemberBySystem(request, SessionUtils.getCurrentUserName());
+        userLogService.batchAddOrgLog(userRoleBatchRelationRequest, SessionUtils.getCurrentUserName());
+        return new TableBatchProcessResponse(userRoleBatchRelationRequest.getSelectIds().size(), userRoleBatchRelationRequest.getSelectIds().size());
     }
 
     private void checkProcessUserAndThrowException(List<String> userIdList, String operatorId, String operatorName, String exceptionMessage) {

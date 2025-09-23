@@ -16,10 +16,14 @@ import {
 } from "naive-ui";
 import EditUser from "/@/views/user/components/EditUser.vue";
 import {cloneDeep} from "es-toolkit";
-import type {UserCreateInfo} from "/@/api/types/user.ts";
+import type {IUserItem, UserCreateInfo} from "/@/api/types/user.ts";
 import CreateOrUpdateModal from "/@/views/user/components/CreateOrUpdateModal.vue";
 import type {IBatchActionQueryParams} from "/@/api/types/commons.ts";
+import BatchModal from "/@/views/user/components/BatchModal.vue";
+import TagGroup from "/@/components/TagGroup.vue";
 
+const batchAction = ref('');
+const showBatchModal = ref(false);
 const keyword = ref('');
 const {page, pageSize, data, send: loadList} = usePagination((page, pageSize) => userApis.fetchUserPage({
       page,
@@ -34,13 +38,53 @@ const {page, pageSize, data, send: loadList} = usePagination((page, pageSize) =>
       watchingStates: [keyword]
     }
 )
-const columns: DataTableColumns<UserState> = [
-  {type: 'selection',},
+const checkedRowKeys = ref<string[]>([])
+const columns: DataTableColumns<IUserItem> = [
+  {
+    type: 'selection',
+    options: [
+      {
+        label: '添加至项目', key: 'batchAddProject',
+        onSelect: (_pageData) => {
+          // console.log(pageData)
+          // checkedRowKeys.value = pageData.map(row => row.id)
+          batchAction.value = 'batchAddProject'
+          showBatchModal.value = true
+        }
+      },
+      {
+        label: '添加至用户组',
+        key: 'batchAddUserGroup', onSelect: (_pageData) => {
+          batchAction.value = 'batchAddUserGroup'
+          showBatchModal.value = true
+        }
+      },
+      {
+        label: '添加至组织',
+        key: 'batchAddOrganization', onSelect: (_pageData) => {
+          batchAction.value = 'batchAddOrganization'
+          showBatchModal.value = true
+        }
+      }
+    ]
+  },
   {title: '用户名', key: 'name',},
-  {title: '邮箱', key: 'email',},
+  {title: '邮箱', key: 'email', width: 200},
   {title: '手机', key: 'phone', width: 140},
-  {title: '组织', key: 'organizationList', width: 300},
-  {title: '用户组', key: 'userRoleList', width: 300},
+  {
+    title: '组织', key: 'organizationList', width: 300,
+    render(record) {
+      return h(TagGroup, {tagList: record.organizationList, showTable: true})
+    }
+  },
+  {
+    title: '用户组', key: 'userRoleList', width: 300,
+    render(record) {
+      if (!record.selectUserGroupVisible) {
+        return h(TagGroup, {tagList: record.userRoleList,showTable: true})
+      }
+    }
+  },
   {
     title: '状态', key: 'enable',
     render(record) {
@@ -53,34 +97,45 @@ const columns: DataTableColumns<UserState> = [
     fixed: 'right',
     width: 110,
     render(record) {
-      return h(NFlex, {}, {
-        default() {
-          return [
-            h(NButton, {
-              size: 'small',
-              type: 'primary',
-              text: true,
-              onClick: () => showUserModal('edit', record)
-            }, {
-              default: () => '编辑'
-            }),
-            h(NButton, {
-              size: 'small',
-              type: 'error',
-              text: true,
-              onClick: () => deleteUser(record)
-            }, {
-              default: () => '删除'
-            })
-          ]
-        }
-      })
+      if (record.enable) {
+        return h(NFlex, {}, {
+          default() {
+            return [
+              h(NButton, {
+                size: 'small',
+                type: 'primary',
+                text: true,
+                onClick: () => showUserModal('edit', record)
+              }, {
+                default: () => '编辑'
+              }),
+              h(NButton, {
+                size: 'small',
+                type: 'error',
+                text: true,
+                onClick: () => deleteUser(record)
+              }, {
+                default: () => '删除'
+              })
+            ]
+          }
+        });
+      } else {
+        return h(NButton, {
+          size: 'small',
+          type: 'error',
+          text: true,
+          onClick: () => deleteUser(record)
+        }, {
+          default: () => '删除'
+        })
+      }
     }
   }
 ]
-const checkedRowKeys = ref<DataTableRowKey[]>([])
+
 const handleCheck = (rowKeys: DataTableRowKey[]) => {
-  checkedRowKeys.value = rowKeys
+  checkedRowKeys.value = rowKeys as string[]
 }
 const pagination: PaginationProps = {
   page: page.value, pageSize: pageSize.value, size: 'small'
@@ -90,6 +145,7 @@ const showAddModel = ref(false)
 const visible = ref(false)
 const userFormMode = ref<'create' | 'edit'>('create')
 const createOrUpdateModalRef = useTemplateRef<InstanceType<typeof CreateOrUpdateModal>>('createOrUpdateModal')
+const batchModalRef = useTemplateRef<InstanceType<typeof BatchModal>>('batchModal')
 const editUserRef = useTemplateRef<InstanceType<typeof EditUser>>('editUser')
 const userForm1 = ref<UserState>()
 
@@ -109,7 +165,7 @@ const defaultUserForm = {
   userGroup: [],
 };
 const userForm = ref<IUserForm>(cloneDeep(defaultUserForm));
-const showUserModal = (mode: UserModalMode, record?: UserState) => {
+const showUserModal = (mode: UserModalMode, record?: IUserItem) => {
   visible.value = true;
   userFormMode.value = mode;
   if (mode === 'edit' && record) {
@@ -124,11 +180,11 @@ const showUserModal = (mode: UserModalMode, record?: UserState) => {
     userForm.value.userGroup = record.userRoleList.map(item => item.id);
   }
 }
-const deleteUser = (record?: UserState, isBatch?: boolean, params?: IBatchActionQueryParams) => {
+const deleteUser = (record?: IUserItem, isBatch?: boolean, params?: IBatchActionQueryParams) => {
   let selectIds = [record?.id || ''];
   let title = `确认删除 ${record?.name} 这个用户吗？`;
   if (isBatch) {
-    selectIds = checkedRowKeys.value as string[];
+    selectIds = checkedRowKeys.value;
     title = `确认删除已选中的 ${params?.currentSelectCount || checkedRowKeys.value.length} 个用户吗？`;
   }
   window.$dialog.error({
@@ -148,7 +204,7 @@ const deleteUser = (record?: UserState, isBatch?: boolean, params?: IBatchAction
     },
   });
 };
-const handleChangeEnable = (value: boolean, record: UserState) => {
+const handleChangeEnable = (value: boolean, record: IUserItem) => {
   if (value) {
     enableUser(record);
   } else {
@@ -156,12 +212,12 @@ const handleChangeEnable = (value: boolean, record: UserState) => {
   }
 }
 const {send: handleUserStatus} = useRequest((param) => userApis.toggleUserStatus(param), {immediate: false})
-const enableUser = (record: UserState, isBatch?: boolean, params?: IBatchActionQueryParams) => {
+const enableUser = (record: IUserItem, isBatch?: boolean, params?: IBatchActionQueryParams) => {
   let title = `确认启用 ${record.name} 这个用户吗？`;
   let selectIds = [record.id || ''];
   if (isBatch) {
     title = `确认启用已选中的 ${params?.currentSelectCount || checkedRowKeys.value.length} 个用户吗？`;
-    selectIds = checkedRowKeys.value as string[];
+    selectIds = checkedRowKeys.value;
   }
   window.$dialog.info({
     title: title,
@@ -182,12 +238,12 @@ const enableUser = (record: UserState, isBatch?: boolean, params?: IBatchActionQ
     },
   });
 }
-const disabledUser = (record: UserState, isBatch?: boolean, params?: IBatchActionQueryParams) => {
+const disabledUser = (record: IUserItem, isBatch?: boolean, params?: IBatchActionQueryParams) => {
   let title = `确认禁用 ${record.name} 这个用户吗？`;
   let selectIds = [record.id || ''];
   if (isBatch) {
     title = `确认禁用已选中的 ${params?.currentSelectCount || checkedRowKeys.value.length} 个用户吗？`;
-    selectIds = checkedRowKeys.value as string[];
+    selectIds = checkedRowKeys.value;
   }
   window.$dialog.error({
     title: title,
@@ -226,7 +282,7 @@ onMounted(() => {
     <n-data-table
         :columns="columns"
         :data="data"
-        :row-key="(row: UserState) => row.id"
+        :row-key="(row: IUserItem) => row.id"
         :pagination="pagination"
         @update:checked-row-keys="handleCheck"
     />
@@ -236,6 +292,8 @@ onMounted(() => {
                           :user-form-mode="userFormMode" @submit="loadList()"/>
   <edit-user ref="editUserRef" v-model:show-modal="showAddModel" v-model:user-form="userForm1"
              :user-form-mode="userFormMode" @submit="loadList()"/>
+  <batch-modal ref="batchModalRef" v-model:show-modal="showBatchModal" :table-selected="checkedRowKeys"
+               :action="batchAction" @finished="loadList"/>
 </template>
 
 <style scoped>

@@ -29,4 +29,6 @@ public interface BaseUserRoleRelationService extends IService<UserRoleRelation> 
     Map<String, UserTableResponse> selectGlobalUserRoleAndOrganization(List<String> userIdList);
 
     void deleteByUserIdList(List<String> userIdList);
+
+    void checkExist(UserRoleRelation userRoleRelation);
 }

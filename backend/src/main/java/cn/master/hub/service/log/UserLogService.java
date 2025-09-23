@@ -6,22 +6,30 @@ import cn.master.hub.dto.UserCreateInfo;
 import cn.master.hub.dto.request.UserEditRequest;
 import cn.master.hub.dto.system.TableBatchProcessDTO;
 import cn.master.hub.dto.system.request.UserChangeEnableRequest;
+import cn.master.hub.dto.system.request.UserRoleBatchRelationRequest;
+import cn.master.hub.entity.SystemOrganization;
+import cn.master.hub.entity.SystemProject;
 import cn.master.hub.entity.SystemUser;
+import cn.master.hub.entity.UserRole;
 import cn.master.hub.handler.Translator;
 import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.handler.log.LogDTOBuilder;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.mapper.SystemUserMapper;
+import cn.master.hub.service.OperationLogService;
 import cn.master.hub.service.UserToolService;
 import cn.master.hub.util.JacksonUtils;
+import com.mybatisflex.core.query.QueryChain;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Created by 11's papa on 2025/9/4
@@ -33,6 +41,8 @@ public class UserLogService {
     SystemUserMapper userMapper;
     @Resource
     UserToolService userToolService;
+    @Resource
+    private OperationLogService operationLogService;
 
     public List<LogDTO> getBatchAddLogs(@Valid List<UserCreateInfo> userList, String operator, String requestPath) {
         List<LogDTO> logs = new ArrayList<>();
@@ -135,5 +145,91 @@ public class UserLogService {
             }
         });
         return logDTOList;
+    }
+
+    public void batchAddOrgLog(UserRoleBatchRelationRequest request, String operator) {
+        List<LogDTO> logs = new ArrayList<>();
+        List<String> userIds = userToolService.getBatchUserIds(request);
+        List<SystemUser> userList = userMapper.selectListByIds(userIds);
+
+        List<String> roleNameList = QueryChain.of(SystemOrganization.class)
+                .where(SystemOrganization::getId).in(request.getRoleIds()).list()
+                .stream().map(SystemOrganization::getName).collect(Collectors.toList());
+        String roleNames = StringUtils.join(roleNameList, ",");
+
+        for (SystemUser user : userList) {
+            //用户管理处修改了用户的组织。
+            LogDTO log = LogDTOBuilder.builder()
+                    .projectId(OperationLogConstants.SYSTEM)
+                    .module(OperationLogModule.SETTING_SYSTEM_USER_SINGLE)
+                    .createUser(operator)
+                    .organizationId(OperationLogConstants.SYSTEM)
+                    .sourceId(user.getId())
+                    .type(OperationLogType.UPDATE.name())
+                    .content(user.getName() + Translator.get("user.add.org") + ":" + roleNames)
+                    .path("/system/user/add-org-member")
+                    .method(HttpMethodConstants.POST.name())
+                    .modifiedValue(JacksonUtils.toJSONBytes(request.getRoleIds()))
+                    .build().getLogDTO();
+            logs.add(log);
+        }
+        operationLogService.batchAdd(logs);
+    }
+
+    public void batchAddUserRoleLog(UserRoleBatchRelationRequest request, String operator) {
+        List<LogDTO> logs = new ArrayList<>();
+        List<String> userIds = userToolService.getBatchUserIds(request);
+        List<SystemUser> userList = userMapper.selectListByIds(userIds);
+
+
+        List<String> roleNameList = QueryChain.of(UserRole.class)
+                .where(UserRole::getId).in(request.getRoleIds()).list()
+                .stream().map(UserRole::getName).collect(Collectors.toList());
+        String roleNames = StringUtils.join(roleNameList, ",");
+
+        for (SystemUser user : userList) {
+            //用户管理处修改了用户的组织。
+            LogDTO log = LogDTOBuilder.builder()
+                    .projectId(OperationLogConstants.SYSTEM)
+                    .module(OperationLogModule.SETTING_SYSTEM_USER_SINGLE)
+                    .createUser(operator)
+                    .organizationId(OperationLogConstants.SYSTEM)
+                    .sourceId(user.getId())
+                    .type(OperationLogType.UPDATE.name())
+                    .content(user.getName() + Translator.get("user.add.group") + ":" + roleNames)
+                    .path("/system/user/add/batch/user-role")
+                    .method(HttpMethodConstants.POST.name())
+                    .modifiedValue(JacksonUtils.toJSONBytes(request.getRoleIds()))
+                    .build().getLogDTO();
+            logs.add(log);
+        }
+        operationLogService.batchAdd(logs);
+    }
+
+    public void batchAddProjectLog(UserRoleBatchRelationRequest request, String operator) {
+
+        List<LogDTO> logs = new ArrayList<>();
+        List<String> userIds = userToolService.getBatchUserIds(request);
+        List<SystemUser> userList = userMapper.selectListByIds(userIds);
+        List<String> projectNameList = QueryChain.of(SystemProject.class).where(SystemProject::getId).in(request.getRoleIds()).list()
+                .stream().map(SystemProject::getName).collect(Collectors.toList());
+        String projectNames = StringUtils.join(projectNameList, ",");
+        for (SystemUser user : userList) {
+            //用户管理处修改了用户的组织。
+            LogDTO log = LogDTOBuilder.builder()
+                    .projectId(OperationLogConstants.SYSTEM)
+                    .createUser(operator)
+                    .method(HttpMethodConstants.POST.name())
+                    .organizationId(OperationLogConstants.SYSTEM)
+                    .sourceId(user.getId())
+                    .type(OperationLogType.UPDATE.name())
+                    .module(OperationLogModule.SETTING_SYSTEM_USER_SINGLE)
+                    .content(user.getName() + Translator.get("user.add.project") + ":" + projectNames)
+                    .path("/system/user/add-project-member")
+                    .modifiedValue(JacksonUtils.toJSONBytes(request.getRoleIds()))
+                    .build().getLogDTO();
+            logs.add(log);
+        }
+        operationLogService.batchAdd(logs);
     }
 }

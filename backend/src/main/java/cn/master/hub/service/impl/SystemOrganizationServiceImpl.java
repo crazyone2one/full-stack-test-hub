@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.master.hub.entity.table.SystemOrganizationTableDef.SYSTEM_ORGANIZATION;
 import static cn.master.hub.entity.table.SystemProjectTableDef.SYSTEM_PROJECT;
 import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
 import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
@@ -233,6 +234,37 @@ public class SystemOrganizationServiceImpl extends ServiceImpl<SystemOrganizatio
         List<String> nameList = users.stream().map(SystemUser::getName).collect(Collectors.toList());
         setLog(request.getOrganizationId(), currentUserName, OperationLogType.ADD.name(), Translator.get("add") + Translator.get("organization_member_log") + ": " + StringUtils.join(nameList, ","), ADD_MEMBER_PATH, null, null, logs);
         operationLogService.batchAdd(logs);
+    }
+
+    @Override
+    public void addMemberBySystem(OrganizationMemberBatchRequest batchRequest, String createUserId) {
+        checkOrgExistByIds(batchRequest.getOrganizationIds());
+        Map<String, SystemUser> userMap = checkUserExist(batchRequest.getUserIds());
+        List<UserRoleRelation> userRoleRelations = new ArrayList<>();
+        batchRequest.getOrganizationIds().forEach(organizationId -> {
+            for (String userId : batchRequest.getUserIds()) {
+                if (userMap.get(userId) == null) {
+                    throw new CustomException(Translator.get("user.not.exist") + ", id: " + userId);
+                }
+                //组织用户关系已存在, 不再重复添加
+                QueryChain<UserRoleRelation> userRoleRelationQueryChain = QueryChain.of(UserRoleRelation.class)
+                        .where(USER_ROLE_RELATION.SOURCE_ID.eq(organizationId)
+                                .and(USER_ROLE_RELATION.USER_ID.eq(userId)));
+                if (userRoleRelationMapper.selectCountByQuery(userRoleRelationQueryChain) > 0) {
+                    continue;
+                }
+                UserRoleRelation userRoleRelation = new UserRoleRelation();
+                userRoleRelation.setUserId(userId);
+                userRoleRelation.setSourceId(organizationId);
+                userRoleRelation.setRoleId(InternalUserRole.ORG_MEMBER.getValue());
+                userRoleRelation.setCreateUser(createUserId);
+                userRoleRelation.setOrganizationId(organizationId);
+                userRoleRelations.add(userRoleRelation);
+            }
+        });
+        if (CollectionUtils.isNotEmpty(userRoleRelations)) {
+            userRoleRelationMapper.insertBatch(userRoleRelations);
+        }
     }
 
     @Override
@@ -493,6 +525,30 @@ public class SystemOrganizationServiceImpl extends ServiceImpl<SystemOrganizatio
                 .on(USER_ROLE_RELATION.USER_ID.eq(SYSTEM_USER.ID).and(USER_ROLE_RELATION.SOURCE_ID.eq(sourceId)))
                 .where(SYSTEM_USER.NAME.like(keyword).or(SYSTEM_USER.EMAIL.like(keyword)))
                 .groupBy(SYSTEM_USER.ID).listAs(UserExtendDTO.class);
+    }
+
+    @Override
+    public Map<SystemOrganization, List<SystemProject>> getOrgProjectMap() {
+        List<SystemProject> allProject = QueryChain.of(SystemProject.class).orderBy(SYSTEM_PROJECT.NAME.asc()).list();
+        if (CollectionUtils.isNotEmpty(allProject)) {
+            LinkedHashMap<SystemOrganization, List<SystemProject>> returnMap = new LinkedHashMap<>();
+            List<SystemOrganization> organizations = queryChain()
+                    .where(SYSTEM_ORGANIZATION.ID.in(allProject.stream().map(SystemProject::getOrganizationId).distinct().collect(Collectors.toList())))
+                    .orderBy(SYSTEM_ORGANIZATION.NAME.asc()).list();
+            for (SystemOrganization org : organizations) {
+                List<SystemProject> projectsInOrg = new ArrayList<>();
+                for (SystemProject project : allProject) {
+                    if (Strings.CS.equals(project.getOrganizationId(), org.getId())) {
+                        projectsInOrg.add(project);
+                    }
+                }
+                allProject.remove(projectsInOrg);
+                returnMap.put(org, projectsInOrg);
+            }
+            return returnMap;
+        } else {
+            return new LinkedHashMap<>();
+        }
     }
 
     private void updateProjectUserRelation(String currentUserName, String organizationId, SystemUser user, List<String> projectIds, List<LogDTO> logDTOList) {

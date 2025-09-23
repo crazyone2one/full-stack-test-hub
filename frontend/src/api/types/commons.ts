@@ -45,8 +45,10 @@ export interface IUserSelectorOption {
     name: string;
     email: string;
     disabled?: boolean;
+
     [key: string]: string | number | boolean | undefined;
 }
+
 export interface IBatchActionQueryParams {
     excludeIds?: string[]; // 排除的id
     selectedIds?: string[];
@@ -56,6 +58,7 @@ export interface IBatchActionQueryParams {
     condition?: any; // 查询条件
     [key: string]: any;
 }
+
 export interface BatchApiParams {
     selectIds: string[]; // 已选 ID 集合，当 selectAll 为 false 时接口会使用该字段
     excludeIds?: string[]; // 需要忽略的用户 id 集合，当selectAll为 true 时接口会使用该字段
@@ -68,4 +71,12 @@ export interface BatchApiParams {
     refId?: string; // 版本来源
     protocols?: string[]; // 协议集合
     // combineSearch?: FilterResult;
+}
+
+export interface ITransferOption {
+    label: string;
+    value: string | number;
+    disabled?: boolean;
+    selected?: boolean;
+    children?: ITransferOption[];
 }

@@ -363,6 +363,12 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
         return commonProjectService.removeProjectMember(projectId, userId, currentUserName, OperationLogModule.SETTING_SYSTEM_ORGANIZATION, StringUtils.join(REMOVE_PROJECT_MEMBER, projectId, "/", userId));
     }
 
+    @Override
+    public void addProjectMember(ProjectAddMemberBatchRequest request, String operator) {
+        commonProjectService.addProjectMember(request, operator, ADD_MEMBER,
+                OperationLogType.ADD.name(), Translator.get("add"), OperationLogModule.SETTING_SYSTEM_ORGANIZATION);
+    }
+
     private List<UserRoleOptionDTO> selectProjectUserRoleByUserIds(List<String> userIds, String projectId) {
         return QueryChain.of(UserRoleRelation.class)
                 .select(QueryMethods.distinct(USER_ROLE_RELATION.ROLE_ID.as("id"), USER_ROLE.NAME, USER_ROLE_RELATION.USER_ID))

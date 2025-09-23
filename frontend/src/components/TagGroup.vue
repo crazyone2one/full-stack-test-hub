@@ -36,21 +36,23 @@ const emit = defineEmits<{
 </script>
 
 <template>
-<div v-if="showTagList.length" :class="`tag-group-class flex w-full flex-row ${props.allowEdit ? 'cursor-pointer' : ''}`" @click="emit('click')">
-  <n-tag v-for="(tag) in showTagList" :key="tag.id" :class="`${props.showTable ? 'ms-tag-group' : ''}`"
-  size="small">
-    {{ getTagContent(tag) }}
-  </n-tag>
-  <n-tooltip :disabled="!(props.tagList.length > props.showNum)">
-    <template #trigger>
-      <n-tag  v-show="props.tagList.length > props.showNum" size="small"
-              class="ms-tag-num">
-        {{ props.tagList.length - props.showNum }}
-      </n-tag>
-    </template>
-    {{tagsTooltip}}
-  </n-tooltip>
-</div>
+  <div v-if="showTagList.length"
+       :class="`tag-group-class flex w-full flex-row ${props.allowEdit ? 'cursor-pointer' : ''}`"
+       @click="emit('click')">
+    <n-tag v-for="(tag) in showTagList" :key="tag.id" :class="`${props.showTable ? 'ms-tag-group' : ''}`"
+           size="small" type="primary" :bordered="false" class="mr-1">
+      {{ getTagContent(tag) }}
+    </n-tag>
+    <n-tooltip :disabled="!(props.tagList.length > props.showNum)">
+      <template #trigger>
+        <n-tag v-show="props.tagList.length > props.showNum" size="small"
+               class="ms-tag-num">
+          {{ props.tagList.length - props.showNum }}
+        </n-tag>
+      </template>
+      {{ tagsTooltip }}
+    </n-tooltip>
+  </div>
   <div v-else :class="`tag-group-class ${props.allowEdit ? 'min-h-[24px] cursor-pointer' : ''}`" @click="emit('click')">
     -
   </div>
@@ -62,6 +64,7 @@ const emit = defineEmits<{
   max-width: 440px;
   white-space: nowrap;
 }
+
 .ms-tag-group {
   min-width: min-content !important;
   max-width: 144px !important;
