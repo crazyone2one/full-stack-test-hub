@@ -7,6 +7,7 @@ import {hasAnyPermission} from "/@/utils/permissions.ts";
 import {useAppStore} from "/@/store";
 import {userGroupApis} from "/@/api/modules/user-group.ts";
 import {useRouter} from "vue-router";
+import AddUserModal from "/@/components/user-group-comp/AddUserModal.vue";
 
 const emit = defineEmits<{
   (e: 'handleSelect', element: IUserGroupItem): void;
@@ -37,6 +38,7 @@ const systemUserGroupVisible = ref(false);
 const orgUserGroupVisible = ref(false);
 // 项目用户创建用户组visible
 const projectUserGroupVisible = ref(false);
+const userModalVisible = ref(false);
 // 系统用户组列表
 const systemUserGroupList = computed(() => {
   return userGroupList.value.filter((ele) => ele.type === AuthScopeEnum.SYSTEM);
@@ -89,7 +91,7 @@ const systemMoreAction = [
   },
 ];
 const handleAddMember = () => {
-
+  userModalVisible.value = true;
 }
 const handleListItemClick = (element: IUserGroupItem) => {
   const {id, name, type, internal} = element;
@@ -135,6 +137,12 @@ const initData = async (id?: string, isSelect = true) => {
 const handleCreateUserGroup = (id: string) => {
   initData(id);
 }
+const handleAddUserCancel = (shouldSearch: boolean) => {
+  userModalVisible.value = false;
+  if (shouldSearch) {
+    emit('addUserSuccess', currentId.value);
+  }
+};
 onMounted(() => {
   initData(router.currentRoute.value.query.id as string, true)
 })
@@ -203,7 +211,7 @@ defineExpose({
     </div>
     <div v-if="showOrg" class="mt-2">
       <div class="flex items-center justify-between px-[4px] py-[7px]">
-        <div class="flex flex-row items-center gap-1">
+        <div class="flex flex-row items-center gap-1 text-[#9597a4]">
           <div v-if="orgToggle" class="i-mdi:chevron-down-circle cursor-pointer text-[16px]"
                @click="orgToggle = false"/>
           <div v-else class="i-mdi:chevron-right-circle cursor-pointer text-[16px]" @click="orgToggle = true"/>
@@ -324,6 +332,7 @@ defineExpose({
       </Transition>
     </div>
   </div>
+  <add-user-modal :show-modal="userModalVisible" :current-id="currentItem.id" @cancel="handleAddUserCancel"/>
 </template>
 
 <style scoped>

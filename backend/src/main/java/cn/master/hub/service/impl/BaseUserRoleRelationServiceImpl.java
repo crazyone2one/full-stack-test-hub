@@ -4,6 +4,7 @@ import cn.master.hub.constants.OperationLogConstants;
 import cn.master.hub.constants.UserRoleEnum;
 import cn.master.hub.constants.UserRoleScope;
 import cn.master.hub.dto.response.UserTableResponse;
+import cn.master.hub.dto.system.UserExcludeOptionDTO;
 import cn.master.hub.entity.SystemOrganization;
 import cn.master.hub.entity.SystemUser;
 import cn.master.hub.entity.UserRole;
@@ -29,13 +30,11 @@ import org.apache.commons.lang3.Strings;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.master.hub.constants.InternalUserRole.ADMIN;
+import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
 import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
 import static cn.master.hub.entity.table.UserRoleTableDef.USER_ROLE;
 import static cn.master.hub.handler.result.CommonResultCode.USER_ROLE_RELATION_EXIST;
@@ -170,6 +169,38 @@ public class BaseUserRoleRelationServiceImpl extends ServiceImpl<UserRoleRelatio
         if (exists) {
             throw new CustomException(USER_ROLE_RELATION_EXIST);
         }
+    }
+
+    @Override
+    public UserRole getUserRole(String id) {
+        UserRoleRelation userRoleRelation = mapper.selectOneById(id);
+        return userRoleRelation == null ? null : QueryChain.of(UserRole.class)
+                .where(USER_ROLE.ID.eq(userRoleRelation.getRoleId())).one();
+    }
+
+    @Override
+    public void delete(String id) {
+        UserRoleRelation userRoleRelation = mapper.selectOneById(id);
+        checkAdminPermissionRemove(userRoleRelation.getUserId(), userRoleRelation.getRoleId());
+        mapper.deleteById(id);
+    }
+
+    @Override
+    public List<UserExcludeOptionDTO> getExcludeSelectOptionWithLimit(String roleId, String keyword) {
+        // 查询所有用户选项
+        List<UserExcludeOptionDTO> selectOptions = QueryChain.of(SystemUser.class)
+                .where(SYSTEM_USER.NAME.like(keyword).or(SYSTEM_USER.EMAIL.like(keyword)))
+                .listAs(UserExcludeOptionDTO.class);
+        // 查询已经关联的用户ID
+        Set<String> excludeUserIds = new HashSet<>(queryChain().select(USER_ROLE_RELATION.USER_ID)
+                .where(USER_ROLE_RELATION.ROLE_ID.eq(roleId)).listAs(String.class));
+        // 标记已经关联的用户
+        selectOptions.forEach((excludeOption) -> {
+            if (excludeUserIds.contains(excludeOption.getValue())) {
+                excludeOption.setExclude(true);
+            }
+        });
+        return selectOptions;
     }
 
     private List<UserRoleRelation> selectGlobalRoleByUserId(String userId) {

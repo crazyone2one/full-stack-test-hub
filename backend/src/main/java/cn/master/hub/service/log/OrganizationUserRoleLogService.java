@@ -2,12 +2,15 @@ package cn.master.hub.service.log;
 
 import cn.master.hub.constants.OperationLogConstants;
 import cn.master.hub.dto.system.OrganizationUserRoleEditRequest;
+import cn.master.hub.dto.system.request.OrganizationUserRoleMemberEditRequest;
 import cn.master.hub.entity.UserRole;
 import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.handler.log.OperationLogModule;
 import cn.master.hub.handler.log.OperationLogType;
+import cn.master.hub.mapper.UserRoleMapper;
 import cn.master.hub.util.JacksonUtils;
 import com.mybatisflex.core.query.QueryChain;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class OrganizationUserRoleLogService {
+    @Resource
+    private UserRoleMapper userRoleMapper;
     public LogDTO addLog(OrganizationUserRoleEditRequest request) {
         LogDTO dto = new LogDTO(
                 OperationLogConstants.ORGANIZATION,
@@ -45,7 +50,20 @@ public class OrganizationUserRoleLogService {
         dto.setModifiedValue(JacksonUtils.toJSONBytes(request.getName()));
         return dto;
     }
-
+    public LogDTO editMemberLog(OrganizationUserRoleMemberEditRequest request) {
+        UserRole userRole = userRoleMapper.selectOneById(request.getUserRoleId());
+        LogDTO dto = new LogDTO(
+                OperationLogConstants.ORGANIZATION,
+                request.getOrganizationId(),
+                OperationLogConstants.SYSTEM,
+                null,
+                null,
+                OperationLogModule.SETTING_ORGANIZATION_USER_ROLE,
+                userRole.getName());
+        dto.setType(OperationLogType.UPDATE.name());
+        dto.setModifiedValue(JacksonUtils.toJSONBytes(request));
+        return dto;
+    }
     public LogDTO deleteLog(String id) {
         UserRole userRole = QueryChain.of(UserRole.class).where(UserRole::getId).eq(id).one();
         LogDTO dto = new LogDTO(

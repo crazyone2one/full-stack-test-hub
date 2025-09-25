@@ -2,13 +2,20 @@ package cn.master.hub.controller;
 
 import cn.master.hub.dto.PermissionDefinitionItem;
 import cn.master.hub.dto.request.PermissionSettingUpdateRequest;
+import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.request.OrganizationUserRoleMemberEditRequest;
+import cn.master.hub.dto.system.request.OrganizationUserRoleMemberRequest;
+import cn.master.hub.entity.SystemUser;
 import cn.master.hub.entity.UserRole;
 import cn.master.hub.handler.log.OperationLogType;
 import cn.master.hub.handler.log.annotation.Log;
 import cn.master.hub.service.OrganizationUserRoleService;
 import cn.master.hub.service.log.OrganizationUserRoleLogService;
+import cn.master.hub.util.SessionUtils;
+import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -50,5 +57,37 @@ public class OrganizationUserRoleController {
     //@CheckOrgOwner(resourceId = "#request.getUserRoleId()", resourceType = "user_role", resourceCol = "scope_id")
     public void updatePermissionSetting(@Validated @RequestBody PermissionSettingUpdateRequest request) {
         organizationUserRoleService.updatePermissionSetting(request);
+    }
+
+    @PostMapping("/list-member")
+    @Operation(summary = "系统设置-组织-用户组-获取成员列表")
+    public Page<SystemUser> listMember(@Validated @RequestBody OrganizationUserRoleMemberRequest request) {
+        return organizationUserRoleService.listMember(request);
+    }
+
+    @PostMapping("/add-member")
+    @Operation(summary = "系统设置-组织-用户组-添加用户组成员")
+    @Log(type = OperationLogType.UPDATE, expression = "#msClass.editMemberLog(#request)", msClass = OrganizationUserRoleLogService.class)
+    public void addMember(@Validated @RequestBody OrganizationUserRoleMemberEditRequest request) {
+        organizationUserRoleService.addMember(request, SessionUtils.getCurrentUserName());
+    }
+
+    @PostMapping("/remove-member")
+    @Operation(summary = "系统设置-组织-用户组-删除用户组成员")
+    @Log(type = OperationLogType.UPDATE, expression = "#msClass.editMemberLog(#request)", msClass = OrganizationUserRoleLogService.class)
+    public void removeMember(@Validated @RequestBody OrganizationUserRoleMemberEditRequest request) {
+        organizationUserRoleService.removeMember(request);
+    }
+    @GetMapping("/get-member/option/{organizationId}/{roleId}")
+    @Operation(summary = "系统设置-组织-用户组-获取成员下拉选项")
+    @Parameters({
+            @Parameter(name = "organizationId", description = "组织ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED)),
+            @Parameter(name = "roleId", description = "用户组ID", schema = @Schema(requiredMode = Schema.RequiredMode.REQUIRED))
+    })
+    public List<UserExtendDTO> getMember(@PathVariable String organizationId,
+                                         @PathVariable String roleId,
+                                         @Schema(description = "查询关键字，根据邮箱和用户名查询")
+                                         @RequestParam(required = false) String keyword) {
+        return organizationUserRoleService.getMember(organizationId, roleId, keyword);
     }
 }

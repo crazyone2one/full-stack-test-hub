@@ -1,4 +1,5 @@
 import {projectManagementApis} from "/@/api/modules/project-management.ts";
+import {userGroupApis} from "/@/api/modules/user-group.ts";
 
 export const UserRequestTypeEnum = {
     SYSTEM_USER_GROUP: 'SYSTEM_USER_GROUP',
@@ -20,9 +21,12 @@ export const UserRequestTypeEnum = {
 } as const
 export type UserRequestTypeEnumType = typeof UserRequestTypeEnum[keyof typeof UserRequestTypeEnum];
 export const initOptionsFunc = (type: string, params: Record<string, any>) => {
-    // if (type === UserRequestTypeEnum.SYSTEM_USER_GROUP) {
-    //     return getSystemUserGroupOption(params)
-    // }
+    if (type === UserRequestTypeEnum.SYSTEM_USER_GROUP) {
+        return userGroupApis.getSystemUserGroupOption(params.roleId, params.keyword)
+    }
+    if (type === UserRequestTypeEnum.ORGANIZATION_USER_GROUP) {
+        return userGroupApis.getOrgUserGroupOption(params.organizationId, params.roleId, params.keyword)
+    }
     if (type === UserRequestTypeEnum.ORGANIZATION_PROJECT_ADMIN) {
         // 组织 - 项目-添加管理员-下拉选项
         return projectManagementApis.fetchAdminByProjectByOrg(params.organizationId, params.keyword);

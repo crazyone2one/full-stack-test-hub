@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {AuthScopeEnum} from "/@/enums/common-enum.ts";
-import {computed, provide, ref} from "vue";
+import {computed, nextTick, provide, ref} from "vue";
 import UserGroupLeft from "/@/views/setting/organization/user-group/components/UserGroupLeft.vue";
 import type {ICurrentUserGroupItem} from "/@/api/types/user-group.ts";
 import UserTable from "/@/views/setting/organization/user-group/components/UserTable.vue";
@@ -16,9 +16,24 @@ const currentUserGroupItem = ref<ICurrentUserGroupItem>({
   type: AuthScopeEnum.SYSTEM,
   internal: true,
 });
+const currentKeyword = ref('');
 const couldShowUser = computed(() => currentUserGroupItem.value.type === AuthScopeEnum.SYSTEM);
 const handleSelect = (item: ICurrentUserGroupItem) => {
   currentUserGroupItem.value = item;
+}
+const handleAddMember = (id: string) => {
+  if (id === currentUserGroupItem.value.id) {
+    tableSearch();
+  }
+}
+const tableSearch = () => {
+  if (currentTable.value === 'user' && userRef.value) {
+    userRef.value.fetchData();
+  } else if (!userRef.value) {
+    nextTick(() => {
+      userRef.value?.fetchData();
+    });
+  }
 }
 </script>
 
@@ -30,7 +45,8 @@ const handleSelect = (item: ICurrentUserGroupItem) => {
                          :add-permission="['SYSTEM_USER_ROLE:READ+ADD']"
                          :update-permission="['SYSTEM_USER_ROLE:READ+UPDATE']"
                          :is-global-disable="false"
-                         @handle-select="handleSelect"/>
+                         @handle-select="handleSelect"
+                         @add-user-success="handleAddMember"/>
       </template>
       <template #2>
         <div class="flex h-full flex-col overflow-hidden pt-[16px]">
@@ -40,11 +56,13 @@ const handleSelect = (item: ICurrentUserGroupItem) => {
               <n-radio value="user" class="show-type-icon p-[2px]">user</n-radio>
             </n-radio-group>
             <div class="flex items-center">
-              <n-input v-if="currentTable === 'user'" placeholder="通过姓名/邮箱/手机搜索" class="w-[240px]"/>
+              <n-input v-if="currentTable === 'user'" v-model:value="currentKeyword"
+                       clearable placeholder="通过姓名/邮箱/手机搜索" class="w-[240px]"/>
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
-            <user-table v-if="currentTable === 'user'" ref="userRef"/>
+            <user-table v-if="currentTable === 'user'" ref="userRef" :keyword="currentKeyword"
+                        :current="currentUserGroupItem"/>
             <auth-table v-if="currentTable === 'auth'" :current="currentUserGroupItem"/>
           </div>
         </div>

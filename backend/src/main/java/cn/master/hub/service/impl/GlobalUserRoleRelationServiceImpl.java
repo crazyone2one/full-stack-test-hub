@@ -2,6 +2,9 @@ package cn.master.hub.service.impl;
 
 import cn.master.hub.constants.UserRoleScope;
 import cn.master.hub.dto.system.TableBatchProcessResponse;
+import cn.master.hub.dto.system.UserExcludeOptionDTO;
+import cn.master.hub.dto.system.UserRoleRelationUserDTO;
+import cn.master.hub.dto.system.request.GlobalUserRoleRelationQueryRequest;
 import cn.master.hub.dto.system.request.GlobalUserRoleRelationUpdateRequest;
 import cn.master.hub.dto.system.request.UserRoleBatchRelationRequest;
 import cn.master.hub.entity.UserRole;
@@ -13,6 +16,8 @@ import cn.master.hub.service.GlobalUserRoleRelationService;
 import cn.master.hub.service.GlobalUserRoleService;
 import cn.master.hub.service.OperationLogService;
 import cn.master.hub.service.UserToolService;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryChain;
 import jakarta.validation.Valid;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
@@ -24,7 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static cn.master.hub.entity.table.SystemUserTableDef.SYSTEM_USER;
 import static cn.master.hub.entity.table.UserRoleRelationTableDef.USER_ROLE_RELATION;
+import static cn.master.hub.handler.result.ResultCode.GLOBAL_USER_ROLE_LIMIT;
 
 /**
  * @author Created by 11's papa on 2025/9/23
@@ -83,8 +90,7 @@ public class GlobalUserRoleRelationServiceImpl extends BaseUserRoleRelationServi
 
     @Override
     public void add(GlobalUserRoleRelationUpdateRequest request) {
-        checkGlobalSystemUserRoleLegality(
-                Collections.singletonList(request.getRoleId()));
+        checkGlobalSystemUserRoleLegality(Collections.singletonList(request.getRoleId()));
         //检查用户的合法性
         checkUserLegality(request.getUserIds());
         List<UserRoleRelation> userRoleRelations = new ArrayList<>();
@@ -98,6 +104,44 @@ public class GlobalUserRoleRelationServiceImpl extends BaseUserRoleRelationServi
             userRoleRelations.add(userRoleRelation);
         });
         mapper.insertBatch(userRoleRelations);
+    }
+
+    @Override
+    public Page<UserRoleRelationUserDTO> userPageByUG(GlobalUserRoleRelationQueryRequest request) {
+        UserRole userRole = globalUserRoleService.get(request.getRoleId());
+        globalUserRoleService.checkSystemUserGroup(userRole);
+        globalUserRoleService.checkGlobalUserRole(userRole);
+        return queryChain()
+                .select(USER_ROLE_RELATION.ID, SYSTEM_USER.ID.as("userId"), SYSTEM_USER.NAME, SYSTEM_USER.EMAIL, SYSTEM_USER.PHONE)
+                .from(USER_ROLE_RELATION)
+                .innerJoin(SYSTEM_USER).on(USER_ROLE_RELATION.USER_ID.eq(SYSTEM_USER.ID))
+                .and(USER_ROLE_RELATION.ROLE_ID.eq(request.getRoleId()))
+                .where(SYSTEM_USER.NAME.like(request.getKeyword())
+                        .or(SYSTEM_USER.EMAIL.like(request.getKeyword()))
+                        .or(SYSTEM_USER.PHONE.like(request.getKeyword())))
+                .orderBy(USER_ROLE_RELATION.CREATE_TIME.desc())
+                .pageAs(new Page<>(request.getPage(), request.getPageSize()), UserRoleRelationUserDTO.class);
+    }
+
+    @Override
+    public void delete(String id) {
+        UserRole userRole = getUserRole(id);
+        globalUserRoleService.checkResourceExist(userRole);
+        UserRoleRelation userRoleRelation = mapper.selectOneById(id);
+        globalUserRoleService.checkSystemUserGroup(userRole);
+        globalUserRoleService.checkGlobalUserRole(userRole);
+        super.delete(id);
+        QueryChain<UserRoleRelation> userRoleRelationQueryChain = queryChain().where(USER_ROLE_RELATION.USER_ID.eq(userRoleRelation.getUserId())
+                .and(USER_ROLE_RELATION.SOURCE_ID.eq(UserRoleScope.SYSTEM)));
+        if (CollectionUtils.isEmpty(mapper.selectListByQuery(userRoleRelationQueryChain))) {
+            throw new CustomException(GLOBAL_USER_ROLE_LIMIT);
+        }
+    }
+
+    @Override
+    public List<UserExcludeOptionDTO> getExcludeSelectOption(String roleId, String keyword) {
+        globalUserRoleService.getWithCheck(roleId);
+        return super.getExcludeSelectOptionWithLimit(roleId, keyword);
     }
 
     private List<UserRoleRelation> selectByUserIdAndRuleId(List<String> userIds, List<String> roleIds) {
