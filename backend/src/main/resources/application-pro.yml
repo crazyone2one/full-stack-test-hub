@@ -1,4 +1,16 @@
 spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 10
+      idle-timeout: 300000
+      auto-commit: true
+      pool-name: DatebookHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  session:
+    timeout: 43200s
   data:
     redis:
       host: 172.16.2.15
