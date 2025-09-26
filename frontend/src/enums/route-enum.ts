@@ -57,12 +57,23 @@ export const ProjectManagementRouteEnum = {
     PROJECT_MANAGEMENT_MENU_MANAGEMENT_ERROR_REPORT_RULE: 'projectManagementMenuManagementErrorReportRule',
     PROJECT_MANAGEMENT_ENVIRONMENT_MANAGEMENT: 'projectManagementEnvironmentManagement',
 } as const
+export const ApiTestRouteEnum = {
+    API_TEST: 'apiTest',
+    API_TEST_DEBUG_MANAGEMENT: 'apiTestDebug',
+    API_TEST_MANAGEMENT: 'apiTestManagement',
+    API_TEST_MANAGEMENT_RECYCLE: 'apiTestManagementRecycle',
+    API_TEST_SCENARIO: 'apiTestScenario',
+    API_TEST_SCENARIO_RECYCLE: 'apiTestScenarioRecycle',
+    API_TEST_REPORT: 'apiTestReport',
+}
 export const RouteEnum = {
     ...SettingRouteEnum,
     ...WorkbenchRouteEnum,
     ...ProjectManagementRouteEnum,
+    ...ApiTestRouteEnum
 }
 // 导出类型
 export type SettingRouteEnumType = typeof SettingRouteEnum[keyof typeof SettingRouteEnum];
 export type WorkbenchRouteEnumType = typeof WorkbenchRouteEnum[keyof typeof WorkbenchRouteEnum];
 export type ProjectManagementRouteEnumType = typeof ProjectManagementRouteEnum[keyof typeof ProjectManagementRouteEnum];
+export type ApiTestRouteEnumType = typeof ApiTestRouteEnum[keyof typeof ApiTestRouteEnum];

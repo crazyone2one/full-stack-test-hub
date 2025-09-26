@@ -17,6 +17,9 @@ const menuIcon = (name: string) => {
   if ("projectManagement" === name) {
     return 'i-mdi:application-cog'
   }
+  if ("apiTest" === name) {
+    return 'i-mdi:swap-horizontal-circle'
+  }
   return "i-mdi:tools";
 }
 const menuOptions = computed(() => {
