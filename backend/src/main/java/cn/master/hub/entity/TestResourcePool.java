@@ -1,9 +1,13 @@
 package cn.master.hub.entity;
 
+import cn.master.hub.handler.validation.Created;
+import cn.master.hub.handler.validation.Updated;
 import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.Table;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,19 +38,19 @@ public class TestResourcePool implements Serializable {
      * 资源池ID
      */
     @Id
-    @Schema(description = "资源池ID")
+    @Schema(description = "资源池ID", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "{test_resource_pool.id.not_blank}", groups = {Updated.class})
+    @Size(min = 1, max = 50, message = "{test_resource_pool.id.length_range}", groups = {Created.class, Updated.class})
     private String id;
 
-    /**
-     * 名称
-     */
-    @Schema(description = "名称")
+    @Schema(description = "名称", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "{test_resource_pool.name.not_blank}", groups = {Created.class})
+    @Size(min = 1, max = 255, message = "{test_resource_pool.name.length_range}", groups = {Created.class, Updated.class})
     private String name;
 
-    /**
-     * 类型
-     */
-    @Schema(description = "类型")
+    @Schema(description = "类型", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "{test_resource_pool.type.not_blank}", groups = {Created.class})
+    @Size(min = 1, max = 30, message = "{test_resource_pool.type.length_range}", groups = {Created.class, Updated.class})
     private String type;
 
     /**

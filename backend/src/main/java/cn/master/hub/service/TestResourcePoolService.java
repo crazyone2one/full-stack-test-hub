@@ -1,7 +1,10 @@
 package cn.master.hub.service;
 
-import com.mybatisflex.core.service.IService;
+import cn.master.hub.dto.system.TestResourcePoolDTO;
+import cn.master.hub.dto.system.request.QueryResourcePoolRequest;
 import cn.master.hub.entity.TestResourcePool;
+import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.service.IService;
 
 /**
  * 测试资源池 服务层。
@@ -10,5 +13,5 @@ import cn.master.hub.entity.TestResourcePool;
  * @since 2025-09-10
  */
 public interface TestResourcePoolService extends IService<TestResourcePool> {
-
+    Page<TestResourcePoolDTO> pageResourcePools(QueryResourcePoolRequest request);
 }

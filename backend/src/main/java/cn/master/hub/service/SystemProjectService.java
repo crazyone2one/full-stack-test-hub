@@ -6,10 +6,7 @@ import cn.master.hub.dto.request.ProjectAddMemberRequest;
 import cn.master.hub.dto.request.ProjectRequest;
 import cn.master.hub.dto.request.ProjectSwitchRequest;
 import cn.master.hub.dto.response.ProjectDTO;
-import cn.master.hub.dto.system.ProjectAddMemberBatchRequest;
-import cn.master.hub.dto.system.SystemProjectRequest;
-import cn.master.hub.dto.system.UpdateProjectRequest;
-import cn.master.hub.dto.system.UserExtendDTO;
+import cn.master.hub.dto.system.*;
 import cn.master.hub.dto.system.request.ProjectMemberRequest;
 import cn.master.hub.entity.SystemProject;
 import com.mybatisflex.core.paginate.Page;
@@ -56,4 +53,6 @@ public interface SystemProjectService extends IService<SystemProject> {
     int removeProjectMember(String projectId, String userId, String currentUserName);
 
     void addProjectMember(ProjectAddMemberBatchRequest request, String operator);
+
+    List<OrganizationProjectOptionsDTO> getProjectOptions(String organizationId);
 }

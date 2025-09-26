@@ -369,6 +369,11 @@ public class SystemProjectServiceImpl extends ServiceImpl<SystemProjectMapper, S
                 OperationLogType.ADD.name(), Translator.get("add"), OperationLogModule.SETTING_SYSTEM_ORGANIZATION);
     }
 
+    @Override
+    public List<OrganizationProjectOptionsDTO> getProjectOptions(String organizationId) {
+        return queryChain().where(SYSTEM_PROJECT.ORGANIZATION_ID.eq(organizationId)).listAs(OrganizationProjectOptionsDTO.class);
+    }
+
     private List<UserRoleOptionDTO> selectProjectUserRoleByUserIds(List<String> userIds, String projectId) {
         return QueryChain.of(UserRoleRelation.class)
                 .select(QueryMethods.distinct(USER_ROLE_RELATION.ROLE_ID.as("id"), USER_ROLE.NAME, USER_ROLE_RELATION.USER_ID))
