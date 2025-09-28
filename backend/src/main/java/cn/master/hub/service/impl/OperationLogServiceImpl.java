@@ -6,6 +6,7 @@ import cn.master.hub.handler.log.LogDTO;
 import cn.master.hub.mapper.OperationHistoryMapper;
 import cn.master.hub.mapper.OperationLogMapper;
 import cn.master.hub.service.OperationLogService;
+import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +54,14 @@ public class OperationLogServiceImpl extends ServiceImpl<OperationLogMapper, Ope
                 operationHistoryMapper.insert(getHistory(log));
             }
         });
+    }
+
+    @Override
+    public void deleteBySourceIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        operationHistoryMapper.deleteByQuery(QueryChain.of(OperationHistory.class).where(OperationHistory::getSourceId).in(ids));
     }
 
     private OperationHistory getHistory(OperationLog log) {

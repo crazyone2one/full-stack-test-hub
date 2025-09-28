@@ -16,4 +16,6 @@ public interface OperationLogService extends IService<OperationLog> {
     void add(OperationLog log);
 
     void batchAdd(List<LogDTO> logs);
+
+    void deleteBySourceIds(List<String> id);
 }
