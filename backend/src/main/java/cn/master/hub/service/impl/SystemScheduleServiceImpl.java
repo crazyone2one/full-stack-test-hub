@@ -110,6 +110,18 @@ public class SystemScheduleServiceImpl extends ServiceImpl<SystemScheduleMapper,
         return "";
     }
 
+    @Override
+    public int deleteByResourceIds(List<String> resourceIds, String group) {
+        for (String resourceId : resourceIds) {
+            removeJob(resourceId, group);
+        }
+        return mapper.deleteByQuery(queryChain().where(SystemSchedule::getResourceId).in(resourceIds));
+    }
+
+    private void removeJob(String key, String job) {
+        scheduleManager.removeJob(new JobKey(key, job), new TriggerKey(key, job));
+    }
+
     private Long getNextNum(String projectId) {
         return NumGenerator.nextNum(projectId, ApplicationNumScope.TASK);
     }

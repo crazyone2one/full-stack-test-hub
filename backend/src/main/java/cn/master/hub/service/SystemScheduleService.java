@@ -8,6 +8,8 @@ import org.quartz.Job;
 import org.quartz.JobKey;
 import org.quartz.TriggerKey;
 
+import java.util.List;
+
 /**
  * 定时任务 服务层。
  *
@@ -24,4 +26,6 @@ public interface SystemScheduleService extends IService<SystemSchedule> {
     String scheduleConfig(ScheduleConfig scheduleConfig, JobKey jobKey, TriggerKey triggerKey, Class<? extends Job> clazz, String operator);
 
     String scheduleConfig(BaseScheduleConfigRequest request, String operator);
+
+    int deleteByResourceIds(List<String> resourceIds, String group);
 }

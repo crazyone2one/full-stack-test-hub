@@ -19,7 +19,7 @@ public class Codegen {
         dataSource.setPassword("123456");
 
         //创建配置内容，两种风格都可以。
-        GlobalConfig globalConfig = createGlobalConfigUseStyle1("project_version");
+        GlobalConfig globalConfig = createGlobalConfigUseStyle1("test_plan_config");
         //GlobalConfig globalConfig = createGlobalConfigUseStyle2();
 
         //通过 datasource 和 globalConfig 创建代码生成器
@@ -50,7 +50,7 @@ public class Codegen {
 //                .setColumnCommentEnable(false)
 //                .setAlwaysGenColumnAnnotation(false)
         ;
-//        globalConfig.enableController();
+        globalConfig.enableController();
         //设置生成 mapper
         globalConfig.setMapperGenerateEnable(true);
         globalConfig.setServiceGenerateEnable(true);

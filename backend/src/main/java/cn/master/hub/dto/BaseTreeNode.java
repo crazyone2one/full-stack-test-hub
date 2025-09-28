@@ -1,5 +1,7 @@
 package cn.master.hub.dto;
 
+import com.mybatisflex.annotation.RelationManyToOne;
+import com.mybatisflex.annotation.RelationOneToMany;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +32,11 @@ public class BaseTreeNode {
     @Schema(description = "项目ID")
     private String projectId;
 
+    @RelationManyToOne(selfField = "parentId", targetField = "id")
+    private BaseTreeNode parent;
+
     @Schema(description = "子节点")
+    @RelationOneToMany(selfField = "id", targetField = "parentId")
     private List<BaseTreeNode> children = new ArrayList<>();
 
     @Schema(description = "附加信息")
