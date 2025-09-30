@@ -21,7 +21,7 @@ import java.util.function.Function;
  */
 @Service
 public class ModuleTreeService {
-    protected static final long LIMIT_POS = NodeSortUtils.DEFAULT_NODE_INTERVAL_POS;
+    public static final long LIMIT_POS = NodeSortUtils.DEFAULT_NODE_INTERVAL_POS;
     private static final String MOVE_POS_OPERATOR_LESS = "lessThan";
     private static final String MOVE_POS_OPERATOR_MORE = "moreThan";
     private static final String MOVE_POS_OPERATOR_LATEST = "latest";

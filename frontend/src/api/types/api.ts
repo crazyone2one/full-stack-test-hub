@@ -2,7 +2,7 @@ import {
     type FullResponseAssertionType,
     type Language,
     type RequestAssertionConditionType,
-    type RequestAuthTypeType,
+    type RequestAuthType,
     type RequestBodyFormatType,
     type RequestConditionProcessor,
     type RequestContentTypeEnumType,
@@ -11,7 +11,7 @@ import {
     type RequestExtractExpressionRuleType,
     type RequestExtractResultMatchingRule,
     type RequestExtractScope,
-    type RequestMethodsType,
+    type RequestMethods,
     type RequestParamsTypeType,
     type ResponseAssertionType,
     type ResponseBodyAssertionDocumentType,
@@ -124,7 +124,7 @@ export interface IRequestResult {
     body: string;
     headers: string;
     url: string;
-    method: RequestMethodsType | string;
+    method: RequestMethods | string;
     responseResult: IResponseResult;
     isSuccessful?: boolean;
     console?: string;
@@ -208,7 +208,7 @@ export interface IResponseItem extends ITabItem, IResponseDefinition {
 
 // 执行请求-认证配置
 export interface ExecuteAuthConfig {
-    authType: RequestAuthTypeType;
+    authType: RequestAuthType;
     basicAuth: {
         password: string;
         userName: string;
@@ -494,7 +494,7 @@ export interface ExecuteApiRequestFullParams {
     authConfig: ExecuteAuthConfig;
     body: ExecuteBody;
     headers: EnableKeyValueParam[];
-    method: RequestMethodsType | string;
+    method: RequestMethods | string;
     otherConfig: ExecuteOtherConfig;
     path: string;
     query: ExecuteRequestCommonParam[];
@@ -503,4 +503,22 @@ export interface ExecuteApiRequestFullParams {
     polymorphicName: string; // 协议多态名称
     children: ExecuteCommonChild[]; // 协议共有的子项配置
     aiCreate?: boolean; // 是否AI创建
+}
+// 执行插件请求入参
+export interface ExecutePluginRequestParams {
+    polymorphicName: string; // 协议多态名称
+    children: ExecuteCommonChild[]; // 协议共有的子项配置
+    [key: string]: any; // key-value形式的插件参数
+}
+// 执行接口调试入参
+export interface ExecuteRequestParams {
+    id?: string;
+    reportId?: string;
+    environmentId: string;
+    uploadFileIds: string[];
+    linkFileIds: string[];
+    request: ExecuteApiRequestFullParams | ExecutePluginRequestParams;
+    projectId: string;
+    frontendDebug?: boolean; // 是否本地调试，该模式下接口会返回执行参数，用来调用本地执行服务
+    apiDefinitionId?: string | number; // 接口用例执行和调试时需要传
 }

@@ -1,4 +1,6 @@
 import type {UserState} from "/@/store/modules/user/types.ts";
+import type {RequestMethodsEnum} from "/@/enums/api-enum.ts";
+import type {TreeOption} from "naive-ui";
 
 export interface ApiResponse<T> {
     code: number;
@@ -16,7 +18,21 @@ export interface IPageResponse<T> {
     totalRow: number;
     records: T[];
 }
-
+// 模块树节点
+export interface ModuleTreeNode extends TreeOption {
+    id: string;
+    name: string;
+    type: 'MODULE' | 'API';
+    children: ModuleTreeNode[];
+    attachInfo: {
+        method?: keyof typeof RequestMethodsEnum;
+        protocol: string;
+    }; // 附加信息
+    count: 0;
+    parentId: string;
+    path: string;
+    parent?: ModuleTreeNode;
+}
 export interface AuthenticationResponse {
     accessToken: string;
     refreshToken: string;

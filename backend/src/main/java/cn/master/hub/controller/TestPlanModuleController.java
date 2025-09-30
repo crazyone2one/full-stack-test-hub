@@ -3,7 +3,7 @@ package cn.master.hub.controller;
 import cn.master.hub.constants.HttpMethodConstants;
 import cn.master.hub.constants.TestPlanResourceConfig;
 import cn.master.hub.dto.BaseTreeNode;
-import cn.master.hub.dto.request.TestPlanModuleCreateRequest;
+import cn.master.hub.dto.request.ModuleCreateRequest;
 import cn.master.hub.dto.request.TestPlanModuleUpdateRequest;
 import cn.master.hub.entity.TestPlanModule;
 import cn.master.hub.service.TestPlanManagementService;
@@ -36,7 +36,7 @@ public class TestPlanModuleController {
 
     @PostMapping("save")
     @Operation(description = "测试计划管理-模块树-添加模块")
-    public String save(@RequestBody @Parameter(description = "测试计划模块") @Validated TestPlanModuleCreateRequest request) {
+    public String save(@RequestBody @Parameter(description = "测试计划模块") @Validated ModuleCreateRequest request) {
         testPlanManagementService.checkModuleIsOpen(request.getProjectId(), TestPlanResourceConfig.CHECK_TYPE_PROJECT, Collections.singletonList(TestPlanResourceConfig.CHECK_TYPE_TEST_PLAN));
         return testPlanModuleService.add(request, SessionUtils.getCurrentUserName(), "/test-plan/module/add", HttpMethodConstants.POST.name());
     }

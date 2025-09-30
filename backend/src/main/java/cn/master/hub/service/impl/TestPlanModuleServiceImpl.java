@@ -5,7 +5,7 @@ import cn.master.hub.dto.*;
 import cn.master.hub.dto.project.NodeSortUtils;
 import cn.master.hub.dto.request.NodeMoveRequest;
 import cn.master.hub.dto.request.TestPlanBatchProcessRequest;
-import cn.master.hub.dto.request.TestPlanModuleCreateRequest;
+import cn.master.hub.dto.request.ModuleCreateRequest;
 import cn.master.hub.dto.request.TestPlanModuleUpdateRequest;
 import cn.master.hub.entity.TestPlan;
 import cn.master.hub.entity.TestPlanModule;
@@ -63,7 +63,7 @@ public class TestPlanModuleServiceImpl extends ServiceImpl<TestPlanModuleMapper,
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String add(TestPlanModuleCreateRequest request, String operator, String requestUrl, String requestMethod) {
+    public String add(ModuleCreateRequest request, String operator, String requestUrl, String requestMethod) {
         TestPlanModule testPlanModule = new TestPlanModule();
         testPlanModule.setName(request.getName());
         testPlanModule.setParentId(request.getParentId());

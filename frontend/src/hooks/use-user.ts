@@ -5,6 +5,7 @@ const whiteRoutes: string[] = ['/login', '/404', '/403', '/500']
 export default function useUser() {
     const isWhiteListPage = () => {
         const currentRoute = router.currentRoute.value;
+        console.log(whiteRoutes.includes(currentRoute.path))
         return whiteRoutes.includes(currentRoute.path);
     };
     const logout = async (logoutTo?: string, noRedirect?: boolean) => {

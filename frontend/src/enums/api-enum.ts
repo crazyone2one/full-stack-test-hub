@@ -11,7 +11,7 @@ export const RequestComposition = {
     AUTH: 'AUTH',
     SETTING: 'SETTING',
 } as const
-export const RequestMethods = {
+export const RequestMethodsEnum = {
     GET: 'GET',
     POST: 'POST',
     PUT: 'PUT',
@@ -95,7 +95,7 @@ export const ResponseComposition = {
     CODE: 'CODE',
     ASSERTION: 'ASSERTION',
 } as const
-export const RequestAuthType = {
+export const RequestAuthTypeEnum = {
     BASIC: 'BASIC',
     DIGEST: 'DIGEST',
     NONE: 'NONE',
@@ -184,7 +184,32 @@ export const RequestExtractScopeEnum = {
     RESPONSE_MESSAGE: 'RESPONSE_MESSAGE',
     URL: 'URL',
 } as const
+export const RequestDefinitionStatusEnum = {
+    DEPRECATED: 'DEPRECATED',
+    PROCESSING: 'PROCESSING',
+    DEBUGGING: 'DEBUGGING',
+    DONE: 'DONE',
+} as const
+
+export const ProtocolKeyEnum = {
+    API_MODULE_TREE_PROTOCOL: 'API_MODULE_TREE_PROTOCOL',
+    TEST_PLAN_API_CASE_PROTOCOL: 'TEST_PLAN_API_CASE_PROTOCOL',
+    ASSOCIATE_CASE_PROTOCOL: 'ASSOCIATE_CASE_PROTOCOL',
+    API_SCENARIO_IMPORT_PROTOCOL: 'API_SCENARIO_IMPORT_PROTOCOL',
+    API_SCENARIO_CUSTOM_PROTOCOL: 'API_SCENARIO_CUSTOM_PROTOCOL',
+    API_NEW_PROTOCOL: 'API_NEW_PROTOCOL',
+    API_DEBUG_NEW_PROTOCOL: 'API_DEBUG_NEW_PROTOCOL',
+    CASE_MANAGEMENT_ASSOCIATE_PROTOCOL: 'CASE_MANAGEMENT_ASSOCIATE_PROTOCOL',
+} as const
+export const RequestCaseStatusEnum = {
+    DEPRECATED: 'DEPRECATED',
+    PROCESSING: 'PROCESSING',
+    DONE: 'DONE',
+} as const
 export type Language = (typeof LanguageEnum)[keyof typeof LanguageEnum];
+export type ProtocolKeyEnumType = (typeof ProtocolKeyEnum)[keyof typeof ProtocolKeyEnum];
+export type RequestCaseStatusType = (typeof RequestCaseStatusEnum)[keyof typeof RequestCaseStatusEnum];
+export type RequestDefinitionStatus = (typeof RequestDefinitionStatusEnum)[keyof typeof RequestDefinitionStatusEnum];
 export type RequestExtractScope = (typeof RequestExtractScopeEnum)[keyof typeof RequestExtractScopeEnum];
 export type RequestExtractExpressionRuleType = (typeof RequestExtractExpressionRuleTypeEnum)[keyof typeof RequestExtractExpressionRuleTypeEnum];
 export type RequestExtractResultMatchingRule = (typeof RequestExtractResultMatchingRuleEnum)[keyof typeof RequestExtractResultMatchingRuleEnum];
@@ -197,7 +222,7 @@ export type ResponseBodyXPathAssertionFormat = typeof ResponseBodyXPathAssertion
 export type RequestContentTypeEnumType = typeof RequestContentTypeEnum[keyof typeof RequestContentTypeEnum];
 export type RequestParamsTypeType = typeof RequestParamsType[keyof typeof RequestParamsType];
 export type RequestBodyFormatType = typeof RequestBodyFormat[keyof typeof RequestBodyFormat];
-export type RequestAuthTypeType = typeof RequestAuthType[keyof typeof RequestAuthType];
+export type RequestAuthType = typeof RequestAuthTypeEnum[keyof typeof RequestAuthTypeEnum];
 export type ResponseBodyFormatType = typeof ResponseBodyFormat[keyof typeof ResponseBodyFormat];
 export type ResponseCompositionType = typeof ResponseComposition[keyof typeof ResponseComposition];
 export type RequestAssertionConditionType = typeof RequestAssertionCondition[keyof typeof RequestAssertionCondition];
@@ -205,5 +230,5 @@ export type RequestExtractEnvType = typeof RequestExtractEnvTypeEnum[keyof typeo
 export type FullResponseAssertionType = typeof FullResponseAssertionTypeEnum[keyof typeof FullResponseAssertionTypeEnum];
 export type ResponseAssertionType = typeof ResponseAssertionTypeEnum[keyof typeof ResponseAssertionTypeEnum];
 export type ScenarioExecuteStatusType = typeof ScenarioExecuteStatus[keyof typeof ScenarioExecuteStatus];
-export type RequestMethodsType = typeof RequestMethods[keyof typeof RequestMethods];
+export type RequestMethods = typeof RequestMethodsEnum[keyof typeof RequestMethodsEnum];
 export type RequestCompositionType = typeof RequestComposition[keyof typeof RequestComposition];

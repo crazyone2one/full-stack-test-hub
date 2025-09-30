@@ -2,7 +2,7 @@ package cn.master.hub.service;
 
 import cn.master.hub.dto.BaseTreeNode;
 import cn.master.hub.dto.request.NodeMoveRequest;
-import cn.master.hub.dto.request.TestPlanModuleCreateRequest;
+import cn.master.hub.dto.request.ModuleCreateRequest;
 import cn.master.hub.dto.request.TestPlanModuleUpdateRequest;
 import cn.master.hub.entity.TestPlanModule;
 import com.mybatisflex.core.service.IService;
@@ -18,7 +18,7 @@ import java.util.List;
 public interface TestPlanModuleService extends IService<TestPlanModule> {
     List<BaseTreeNode> getTree(String projectId);
 
-    String add(TestPlanModuleCreateRequest request, String operator, String requestUrl, String requestMethod);
+    String add(ModuleCreateRequest request, String operator, String requestUrl, String requestMethod);
 
     void update(TestPlanModuleUpdateRequest request, String userId, String requestUrl, String requestMethod);
 

@@ -6,21 +6,20 @@ import {type RouteRecordRaw, RouterLink} from "vue-router";
 import useMenuTree from "/@/hooks/use-menu-tree.ts";
 import {listenerRouteChange} from "/@/utils/route-listener.ts";
 import {getFirstRouterNameByCurrentRoute} from "/@/utils/permissions.ts";
+import {RouteEnum} from "/@/enums/route-enum.ts";
 
 const expandedKeys = ref<string[]>([])
 const collapsed = ref(false)
 const {menuTree} = useMenuTree();
 const menuIcon = (name: string) => {
-  if ("workstation" === name) {
-    return 'i-mdi:monitor-dashboard'
-  }
-  if ("projectManagement" === name) {
-    return 'i-mdi:application-cog'
-  }
-  if ("apiTest" === name) {
-    return 'i-mdi:swap-horizontal-circle'
-  }
-  return "i-mdi:tools";
+  const iconMap: Record<string, string> = {
+    [RouteEnum.WORKBENCH]: 'i-mdi:monitor-dashboard',
+    [RouteEnum.PROJECT_MANAGEMENT]: 'i-mdi:application-cog',
+    [RouteEnum.API_TEST]: 'i-mdi:swap-horizontal-circle',
+    [RouteEnum.TEST_PLAN]: 'i-mdi:invoice-text-check-outline'
+  };
+
+  return iconMap[name] || "i-mdi:tools";
 }
 const menuOptions = computed(() => {
   const travel = (_route: (RouteRecordRaw | null)[] | null, nodes: Array<MenuOption> = []) => {

@@ -66,12 +66,22 @@ export const ApiTestRouteEnum = {
     API_TEST_SCENARIO_RECYCLE: 'apiTestScenarioRecycle',
     API_TEST_REPORT: 'apiTestReport',
 }
+export const TestPlanRouteEnum = {
+    TEST_PLAN: 'testPlan',
+    TEST_PLAN_INDEX: 'testPlanIndex',
+    TEST_PLAN_INDEX_DETAIL: 'testPlanIndexDetail',
+    TEST_PLAN_INDEX_CONFIG: 'testPlanIndexConfig',
+    TEST_PLAN_INDEX_DETAIL_FEATURE_CASE_DETAIL: 'testPlanIndexDetailFeatureCaseDetail',
+    TEST_PLAN_REPORT: 'testPlanReport',
+    TEST_PLAN_REPORT_DETAIL: 'testPlanReportDetail',
+} as const
 export const RouteEnum = {
     ...SettingRouteEnum,
     ...WorkbenchRouteEnum,
     ...ProjectManagementRouteEnum,
-    ...ApiTestRouteEnum
-}
+    ...ApiTestRouteEnum,
+    ...TestPlanRouteEnum,
+};
 // 导出类型
 export type SettingRouteEnumType = typeof SettingRouteEnum[keyof typeof SettingRouteEnum];
 export type WorkbenchRouteEnumType = typeof WorkbenchRouteEnum[keyof typeof WorkbenchRouteEnum];
